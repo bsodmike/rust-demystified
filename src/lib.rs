@@ -21,8 +21,8 @@ pub trait CanMonitor<T> {
 }
 
 impl Monitorable<MonitorableComponent> {
-    pub fn new(item: MonitorableComponent) -> Monitorable<MonitorableComponent> {
-        Monitorable::<MonitorableComponent> { context: item }
+    pub fn new(item: MonitorableComponent) -> Self {
+        Self { context: item }
     }
 }
 
