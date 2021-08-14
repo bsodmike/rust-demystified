@@ -1,4 +1,4 @@
-# Rust Demystified
+# Rust Trait Objects Demystified
 
 This repo means to serve as a playground for expressing concepts quickly, in a "Rust by Example" format.
 
