@@ -21,7 +21,8 @@ pub trait MonitorableContext: MonitorableContextClone {
 
 /**
  * MonitorableContextClone
- * Sub-trait for MonitorableContext trait object.
+ * Superrait for MonitorableContext.
+ * Ref: https://doc.rust-lang.org/rust-by-example/trait/supertraits.html?highlight=sub-traits#supertraits
  */
 pub trait MonitorableContextClone {
     fn clone_box(&self) -> Box<dyn MonitorableContext>;
