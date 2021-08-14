@@ -21,7 +21,7 @@ pub trait MonitorableContext: MonitorableContextClone {
 
 /**
  * MonitorableContextClone
- * Superrait for MonitorableContext.
+ * Supertrait for MonitorableContext.
  * Ref: https://doc.rust-lang.org/rust-by-example/trait/supertraits.html?highlight=sub-traits#supertraits
  */
 pub trait MonitorableContextClone {
