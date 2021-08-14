@@ -1,3 +1,6 @@
+#![allow(unused_doc_comments)]
+
+use std::any::Any;
 use std::cmp::PartialEq;
 
 #[derive(Debug)]
@@ -8,6 +11,12 @@ pub struct FreeMem;
 pub enum MonitorableComponent {
     DiskSpace,
     FreeMem,
+}
+
+pub trait MonitorableContext: MonitorableContextClone {
+    fn as_any(&self) -> &dyn Any;
+    fn access_description(&self) -> Option<String>;
+    fn access_service_tag(&self) -> Option<String>;
 }
 
 /**
@@ -34,43 +43,123 @@ impl Clone for Box<dyn MonitorableContext> {
 }
 // END: MonitorableContextClone
 
-
-pub trait MonitorableContext: MonitorableContextClone {
-    fn access_name(&self) -> String;
-}
-
+/**
+ * Implmement trait MonitorableContext
+ */
 impl MonitorableContext for MonitorableComponent {
-    fn access_name(&self) -> String {
-        return String::from("No name");
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn access_description(&self) -> Option<String> {
+        return None;
+    }
+
+    fn access_service_tag(&self) -> Option<String> {
+        return None;
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Server {
-    pub name: String
+    pub description: String,
+    pub service_tag: String,
+    pub build_date: String,
 }
 
 impl MonitorableContext for Server {
-    fn access_name(&self) -> String {
-        return self.clone().name;
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn access_description(&self) -> Option<String> {
+        return Some(self.clone().description);
+    }
+
+    fn access_service_tag(&self) -> Option<String> {
+        return Some(self.clone().service_tag.to_string());
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct NetworkCard {
+    pub description: String,
+    pub service_tag: String,
+    pub mac_address: String,
+}
+
+impl MonitorableContext for NetworkCard {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn access_description(&self) -> Option<String> {
+        return Some(self.clone().description);
+    }
+
+    fn access_service_tag(&self) -> Option<String> {
+        return Some(self.clone().service_tag.to_string());
     }
 }
 
 #[derive(Clone)]
 pub struct Monitorable {
     context: Box<dyn MonitorableContext>,
-    name: String
+    note: String,
 }
 
 pub trait CanMonitor {
     fn get_context(&self) -> Box<dyn MonitorableContext>;
-
-    fn get_name(&self) -> String;
+    fn get_description(&self) -> Option<String>;
+    fn get_service_tag(&self) -> Option<String>;
 }
 
 impl Monitorable {
-    pub fn new(context: Box<dyn MonitorableContext>) -> Box<dyn MonitorableContext>{
+    pub fn new(note: String, context: Box<dyn MonitorableContext>) -> Self {
+        return Self {
+            context: context,
+            note: note,
+        };
+    }
+
+    // This constructor has only been included to demonstrate that we can return the concrete-type
+    // at invocation if we wanted to; however, it makes more sense to access this through
+    // an instance of `Monitorable` itself.
+    pub fn new_for_context(context: Box<dyn MonitorableContext>) -> Box<dyn MonitorableContext> {
         return context;
+    }
+}
+
+pub trait CanMonitorShared {
+    fn get_context(&self) -> &Box<dyn MonitorableContext>;
+    fn get_note(&self) -> &String;
+    fn get_server(&self) -> &Server;
+    fn get_network_card(&self) -> &NetworkCard;
+}
+
+impl CanMonitorShared for Monitorable {
+    fn get_context(&self) -> &Box<dyn MonitorableContext> {
+        return &self.context;
+    }
+
+    fn get_note(&self) -> &String {
+        return &self.note;
+    }
+
+    fn get_server(&self) -> &Server {
+        return self
+            .context
+            .as_any()
+            .downcast_ref::<Server>()
+            .expect("This should be a nice server");
+    }
+
+    fn get_network_card(&self) -> &NetworkCard {
+        return self
+            .context
+            .as_any()
+            .downcast_ref::<NetworkCard>()
+            .expect("This should be a well behaved NIC");
     }
 }
 
@@ -79,8 +168,12 @@ impl CanMonitor for Box<dyn MonitorableContext> {
         return self.clone();
     }
 
-    fn get_name(&self) -> String {
-        return self.access_name();
+    fn get_description(&self) -> Option<String> {
+        return self.access_description();
+    }
+
+    fn get_service_tag(&self) -> Option<String> {
+        return self.access_service_tag();
     }
 }
 
@@ -89,37 +182,80 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-
-    #[test]
     fn it_is_composable() {
-        let disk_space = Monitorable::new(Box::new(MonitorableComponent::DiskSpace));
-        
-        let server = Monitorable::new(Box::new(Server { 
-            name: "Dell".to_string() 
+        /**
+         * Here we test returning the concrete type at run-time
+         */
+        let server_tag = String::from("001");
+        let server_description = String::from("Dell PowerEdge R740xd");
+        let disk_space = Monitorable::new_for_context(Box::new(MonitorableComponent::DiskSpace));
+
+        match disk_space.get_description() {
+            None => {
+                assert!(true)
+            }
+            _ => {}
+        }
+
+        let free_mem = Monitorable::new_for_context(Box::new(MonitorableComponent::FreeMem));
+
+        match free_mem.get_description() {
+            None => {
+                assert!(true)
+            }
+            _ => {}
+        }
+
+        let server = Monitorable::new_for_context(Box::new(Server {
+            description: server_description.clone(),
+            service_tag: server_tag.clone(),
+            build_date: String::from("01JAN2021"),
         }));
-        
-        assert_eq!(server.get_name(), "Dell");
-        assert_eq!(disk_space.get_name(), "No name");
-        assert_eq!(server.get_name(), server.get_context().get_name());
 
+        if let Some(i) = server.get_description() {
+            assert_eq!(i, server_description);
+        }
 
-        // match server.get_name() {
-        //     MonitorableComponent::DiskSpace => {
-        //         println!("Got Diskspace!");
-        //     }
-        //     _ => (),
-        // }
+        /**
+         * This would be the preferred invocation approach, as the return type is that of `Monitorable`
+         */
+        let mut monitor_note = String::from("Monitoring Dell Server");
+        let server_build_date = String::from("01JAN2021");
+        let server2 = Monitorable::new(
+            monitor_note.clone(),
+            Box::new(Server {
+                description: server_description.clone(),
+                service_tag: server_tag.clone(),
+                build_date: server_build_date.clone(),
+            }),
+        );
 
+        assert_eq!(*server2.get_note(), monitor_note);
 
+        let server2_service_tag = server2.get_context().access_service_tag();
+        if let Some(i) = server2_service_tag {
+            assert_eq!(i, server_tag);
+        }
 
-        // assert_eq!(disk_space.context, MonitorableComponent::DiskSpace);
-        // assert_eq!(disk_space.get_context(), MonitorableComponent::DiskSpace);
+        assert_eq!(*server2.get_server().build_date, server_build_date);
 
-        // let free_mem = Monitorable::new(Box::new(MonitorableComponent::FreeMem));
-        // assert_eq!(free_mem.context, MonitorableComponent::FreeMem);
-        // assert_eq!(free_mem.get_context(), MonitorableComponent::FreeMem);
+        monitor_note = String::from("Monitoring StarTech NIC");
+        let nic_service_tag = String::from("PEX20000SFPI");
+        let nic_description =
+            String::from("StarTech PCIe fiber network card - 2-port open SFP - 10G");
+        let nic_mac_address = String::from("00:1B:44:11:3A:B7");
+        let network_card = Monitorable::new(
+            monitor_note,
+            Box::new(NetworkCard {
+                description: nic_description.clone(),
+                service_tag: nic_service_tag.clone(),
+                mac_address: nic_mac_address.clone(),
+            }),
+        );
+
+        assert_eq!(
+            *network_card.get_network_card().mac_address,
+            nic_mac_address
+        );
     }
 }
