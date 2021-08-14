@@ -1,6 +1,6 @@
 # Rust Trait Objects Demystified
 
-![example workflow](https://github.com/bsodmike/rust-demystified/actions/workflows/main.yml/badge.svg)
+[![Rust](https://github.com/bsodmike/rust-demystified/actions/workflows/trait_object_approach.yml/badge.svg?branch=todo%2Ftrait_object_approach)](https://github.com/bsodmike/rust-demystified/actions/workflows/trait_object_approach.yml)
 
 This repo means to serve as a playground for expressing concepts quickly, in a "Rust by Example" format.
 
