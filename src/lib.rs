@@ -258,4 +258,30 @@ mod tests {
             nic_mac_address
         );
     }
+
+    #[test]
+    fn use_of_enums() {
+        let note = String::from("Monitoring of disk space");
+        let disk_space = Monitorable::new(note.clone(), Box::new(MonitorableComponent::DiskSpace));
+
+        let context = disk_space.get_context();
+        let disk_space_variant = context
+            .as_any()
+            .downcast_ref::<MonitorableComponent>()
+            .expect("This should be a DiskSpace variant");
+
+        assert_eq!(disk_space.note, note);
+
+        if let Some(i) = Some(disk_space_variant) {
+            assert_eq!(*i, MonitorableComponent::DiskSpace)
+        }
+
+        // We could test the above in this manner as well, although not as succint.
+        match disk_space_variant {
+            MonitorableComponent::DiskSpace => {
+                assert!(true);
+            }
+            _ => {}
+        }
+    }
 }
