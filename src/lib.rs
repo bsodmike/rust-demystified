@@ -261,6 +261,26 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn calling_method_on_incorrect_type() {
+        let monitor_note = String::from("Monitoring StarTech NIC");
+        let nic_service_tag = String::from("PEX20000SFPI");
+        let nic_description =
+            String::from("StarTech PCIe fiber network card - 2-port open SFP - 10G");
+        let nic_mac_address = String::from("00:1B:44:11:3A:B7");
+        let network_card = Monitorable::new(
+            monitor_note,
+            Box::new(NetworkCard {
+                description: nic_description.clone(),
+                service_tag: nic_service_tag.clone(),
+                mac_address: nic_mac_address.clone(),
+            }),
+        );
+
+        let _ = network_card.get_server();
+    }
+
+    #[test]
     fn use_of_enums() {
         let note = String::from("Monitoring of disk space");
         let disk_space = Monitorable::new(note.clone(), Box::new(MonitorableComponent::DiskSpace));
