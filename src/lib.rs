@@ -3,19 +3,13 @@ use std::iter::FromIterator;
 use std::vec::Vec;
 
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 struct Shoe {
-    size: u32,
-    id: u32
-}
-
-#[derive(Debug, PartialEq)]
-struct NormalShoe {
     size: u32,
     style: String
 }
 
-fn shoes_in_size(shoes: Vec<NormalShoe>, shoe_size: u32) -> Vec<NormalShoe> {
+fn shoes_in_size(shoes: Vec<Shoe>, shoe_size: u32) -> Vec<Shoe> {
     shoes.into_iter().filter(|s| s.size == shoe_size).collect()
 }
 
@@ -23,9 +17,10 @@ fn shoes_in_size_iterable(shoes: MyVec<Vec<Shoe>>, shoe_size: u32) -> MyVec<Vec<
     shoes.iter().filter(|s| s.size == shoe_size).collect()
 }
 
-// fn shoes_into_iter(shoes: MyVec<Vec<Shoe>>, shoe_size: u32) -> MyVec<Vec<Shoe>> {
-//     shoes.into_iter().filter(|s| s.size == shoe_size).collect()
-// }
+fn shoes_into_iter(shoes: MyVec<Vec<Shoe>>, shoe_size: u32) -> MyVec<Vec<Shoe>> {
+    // shoes.into_iter().filter(|s| s.size == shoe_size).collect()
+    shoes
+}
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 struct MyVec<T>(T);
@@ -98,54 +93,55 @@ impl<'a> FromIterator<&'a Shoe> for MyVec<Vec<Shoe>> {
 mod tests {
     use super::*;
 
-    // #[test]
-    // fn add_into_iter() {
-    //     let shoes = MyVec(vec![
-    //         Shoe {
-    //             size: 10,
-    //             id: 0
-    //         },
-    //         Shoe {
-    //             size: 13,
-    //             id: 1,
-    //         },
-    //         Shoe {
-    //             size: 10,
-    //             id: 2,
-    //         },
-    //     ]);
+    #[test]
+    #[ignore]
+    fn add_into_iter() {
+        let shoes = MyVec(vec![
+            Shoe {
+                size: 10,
+                style: String::from("sneaker"),
+            },
+            Shoe {
+                size: 13,
+                style: String::from("sandal"),
+            },
+            Shoe {
+                size: 10,
+                style: String::from("boot"),
+            },
+        ]);
 
-    //     let in_my_size = shoes_into_iter(shoes, 10);
+        let in_my_size = shoes_into_iter(shoes, 10);
 
-    //     assert_eq!(
-    //         in_my_size,
-    //         MyVec(vec![
-    //             Shoe {
-    //                 size: 10,
-    //                 id: 0,
-    //             },
-    //             Shoe {
-    //                 size: 10,
-    //                 id: 2,
-    //             },
-    //         ])
-    //     );
-    // }
+        assert_eq!(
+            in_my_size,
+            MyVec(vec![
+                Shoe {
+                    size: 10,
+                    style: String::from("sneaker"),
+                },
+                Shoe {
+                    size: 10,
+                    style: String::from("boot"),
+                },
+            ])
+        );
+    }
 
     #[test]
     fn filters_by_size_wrapped_iter() {
         let shoes = MyVec(vec![
             Shoe {
                 size: 10,
-                id: 100
+                style: String::from("sneaker"),
             },
             Shoe {
                 size: 13,
-                id: 101,
+                style: String::from("sandal"),
             },
             Shoe {
                 size: 10,
-                id: 102,
+                style: String::from("boot"),
             },
         ]);
 
@@ -156,11 +152,11 @@ mod tests {
             MyVec(vec![
                 Shoe {
                     size: 10,
-                    id: 100,
+                    style: String::from("sneaker"),
                 },
                 Shoe {
                     size: 10,
-                    id: 102,
+                    style: String::from("boot"),
                 },
             ])
         );
@@ -169,15 +165,15 @@ mod tests {
     #[test]
     fn filters_by_size() {
         let shoes = vec![
-            NormalShoe {
+            Shoe {
                 size: 10,
                 style: String::from("sneaker"),
             },
-            NormalShoe {
+            Shoe {
                 size: 13,
                 style: String::from("sandal"),
             },
-            NormalShoe {
+            Shoe {
                 size: 10,
                 style: String::from("boot"),
             },
@@ -188,11 +184,11 @@ mod tests {
         assert_eq!(
             in_my_size,
             vec![
-                NormalShoe {
+                Shoe {
                     size: 10,
                     style: String::from("sneaker"),
                 },
-                NormalShoe {
+                Shoe {
                     size: 10,
                     style: String::from("boot"),
                 },
