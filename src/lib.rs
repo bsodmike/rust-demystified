@@ -31,7 +31,7 @@ fn shoes_in_size_iterable(shoes: MyVec<Vec<Shoe>>, shoe_size: u32) -> MyVec<Vec<
 struct MyVec<T>(T);
 
 struct MyVecIter<'a, T> {
-    vector: &'a MyVec<T>,
+    vector: &'a T,
     cur: usize,
 }
 
@@ -40,9 +40,9 @@ impl MyVec<Vec<Shoe>> {
         MyVec(Vec::<Shoe>::new())
     }
 
-    pub fn iter(&self) -> MyVecIter<Vec<Shoe>> {
+    pub fn iter(&self) -> MyVecIter<'_, Vec<Shoe>> {
         MyVecIter::<Vec<Shoe>> {
-            vector: self,
+            vector: &self.0,
             cur: 0,
         }
     }
@@ -52,15 +52,15 @@ impl MyVec<Vec<Shoe>> {
     }
 }
 
-impl Iterator for MyVecIter<'_, Vec<Shoe>> {
-    type Item = Shoe;
+impl<'a> Iterator for MyVecIter<'a, Vec<Shoe>> {
+    type Item = &'a Shoe;
     fn next(&mut self) -> Option<Self::Item> {
-        let inner_vec = &self.vector.0;
+        let inner_vec = self.vector;
         if self.cur < inner_vec.len() {
             self.cur += 1;
 
             println!("cur: {:?}", self.cur);
-            return Some(inner_vec[self.cur - 1]);
+            return Some(&inner_vec[self.cur - 1]);
         } else {
             return None
         }
@@ -79,15 +79,15 @@ impl Iterator for MyVecIter<'_, Vec<Shoe>> {
 // }
 
 // Implemented to call `filter`
-impl FromIterator<Shoe> for MyVec<Vec<Shoe>> {
+impl<'a> FromIterator<&'a Shoe> for MyVec<Vec<Shoe>> {
     fn from_iter<T>(iter: T) -> Self
     where
-        T: IntoIterator<Item = Shoe>,
+        T: IntoIterator<Item = &'a Shoe>,
     {
         let mut c = MyVec::<Vec<Shoe>>::new();
 
         for i in iter {
-            c.add(i)
+            c.add(i.clone())
         }
 
         c
