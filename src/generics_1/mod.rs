@@ -7,7 +7,7 @@ pub struct FreeMem;
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum MonitorableComponent {
     DiskSpace,
-    FreeMem
+    FreeMem,
 }
 
 pub struct Monitorable<T> {

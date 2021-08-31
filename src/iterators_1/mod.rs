@@ -5,7 +5,7 @@ use std::vec::Vec;
 #[derive(Debug, PartialEq, Clone)]
 struct Shoe {
     size: u32,
-    style: String
+    style: String,
 }
 
 fn shoes_in_size(shoes: Vec<Shoe>, shoe_size: u32) -> Vec<Shoe> {
@@ -51,7 +51,7 @@ impl<'a> Iterator for MyVecIter<'a, Vec<Shoe>> {
             println!("cur: {:?}", self.cur);
             return Some(&inner_vec[self.cur - 1]);
         } else {
-            return None
+            return None;
         }
     }
 }
