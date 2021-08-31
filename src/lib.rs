@@ -2,7 +2,6 @@
 use std::iter::FromIterator;
 use std::vec::Vec;
 
-
 #[derive(Debug, PartialEq, Clone)]
 struct Shoe {
     size: u32,
@@ -13,16 +12,11 @@ fn shoes_in_size(shoes: Vec<Shoe>, shoe_size: u32) -> Vec<Shoe> {
     shoes.into_iter().filter(|s| s.size == shoe_size).collect()
 }
 
-fn shoes_in_size_iterable(shoes: MyVec<Vec<Shoe>>, shoe_size: u32) -> MyVec<Vec<Shoe>> {
-    shoes.iter().filter(|s| s.size == shoe_size).collect()
-}
-
 fn shoes_into_iter(shoes: MyVec<Vec<Shoe>>, shoe_size: u32) -> MyVec<Vec<Shoe>> {
-    // shoes.into_iter().filter(|s| s.size == shoe_size).collect()
-    shoes
+    shoes.into_iter().filter(|s| s.size == shoe_size).collect()
 }
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 struct MyVec<T>(T);
 
 struct MyVecIter<'a, T> {
@@ -35,7 +29,7 @@ impl MyVec<Vec<Shoe>> {
         MyVec(Vec::<Shoe>::new())
     }
 
-    pub fn iter(&self) -> MyVecIter<'_, Vec<Shoe>> {
+    pub fn into_iter(&self) -> MyVecIter<'_, Vec<Shoe>> {
         MyVecIter::<Vec<Shoe>> {
             vector: &self.0,
             cur: 0,
@@ -62,17 +56,6 @@ impl<'a> Iterator for MyVecIter<'a, Vec<Shoe>> {
     }
 }
 
-// impl IntoIterator for MyVec<Vec<Shoe>> {
-//     type Item = Shoe;
-//     type IntoIter = std::vec::IntoIter<Self::Item>;
-
-//     fn into_iter(self) -> Self::IntoIter {
-//         let inner_vec = self.0;
-
-//         return inner_vec.into_iter();
-//     }
-// }
-
 // Implemented to call `filter`
 impl<'a> FromIterator<&'a Shoe> for MyVec<Vec<Shoe>> {
     fn from_iter<T>(iter: T) -> Self
@@ -94,8 +77,7 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore]
-    fn add_into_iter() {
+    fn filters_by_size_wrapped() {
         let shoes = MyVec(vec![
             Shoe {
                 size: 10,
@@ -112,40 +94,6 @@ mod tests {
         ]);
 
         let in_my_size = shoes_into_iter(shoes, 10);
-
-        assert_eq!(
-            in_my_size,
-            MyVec(vec![
-                Shoe {
-                    size: 10,
-                    style: String::from("sneaker"),
-                },
-                Shoe {
-                    size: 10,
-                    style: String::from("boot"),
-                },
-            ])
-        );
-    }
-
-    #[test]
-    fn filters_by_size_wrapped_iter() {
-        let shoes = MyVec(vec![
-            Shoe {
-                size: 10,
-                style: String::from("sneaker"),
-            },
-            Shoe {
-                size: 13,
-                style: String::from("sandal"),
-            },
-            Shoe {
-                size: 10,
-                style: String::from("boot"),
-            },
-        ]);
-
-        let in_my_size = shoes_in_size_iterable(shoes, 10);
 
         assert_eq!(
             in_my_size,
