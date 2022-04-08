@@ -1,7 +1,8 @@
 #![warn(rust_2018_idioms)]
 
 use clap::Parser;
-use lib::dispatch::{runner, Args, Implementation};
+use lib::clap::{runner, Args, Implementation};
+use lib::dispatch::*;
 
 mod lib;
 
@@ -15,4 +16,12 @@ fn main() {
         }),
     };
     assert_eq!(value, "hello".to_string());
+
+    // Dispatch
+    let x: Box<dyn AsRef<str>> = Box::new("hello".to_string());
+    strlen_dyn(x);
+
+    // Use go-through pointer-indirection for something on the stack
+    let x: &dyn AsRef<str> = &"hello".to_string();
+    strlen_dyn2(x);
 }

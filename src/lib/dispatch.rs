@@ -1,30 +1,25 @@
-use clap::Parser;
-use std::str::FromStr;
-
-/// Simple program to greet a person
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-pub struct Args {
-    #[clap(short, long)]
-    pub implementation: Implementation,
+pub trait Hei {
+    fn hei(&self);
 }
 
-#[derive(Parser, Debug)]
-pub enum Implementation {
-    r#Default,
-}
-
-impl FromStr for Implementation {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "default" => Ok(Self::Default),
-            _ => Err(format!("unknown implementation {}", s)),
-        }
+impl Hei for &str {
+    fn hei(&self) {
+        println!("hei {}", self);
     }
 }
 
-pub fn runner<T>(mut mk: impl FnMut() -> T) -> T {
-    mk()
+pub fn strlen<S: AsRef<str>>(s: S) -> usize {
+    s.as_ref().len()
+}
+
+pub fn strlen2(s: String) -> usize {
+    s.len()
+}
+
+pub fn strlen_dyn(s: Box<dyn AsRef<str>>) -> usize {
+    s.as_ref().as_ref().len()
+}
+
+pub fn strlen_dyn2(s: &dyn AsRef<str>) -> usize {
+    s.as_ref().len()
 }
