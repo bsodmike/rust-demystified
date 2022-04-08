@@ -24,4 +24,10 @@ fn main() {
     // Use go-through pointer-indirection for something on the stack
     let x: &dyn AsRef<str> = &"hello".to_string();
     strlen_dyn(x);
+
+    // Use our Hei trait
+    let x: &dyn Hei = &"hei".to_string();
+    say_hei(x);
+    let x: &dyn Hei = &"hei";
+    say_hei(x);
 }

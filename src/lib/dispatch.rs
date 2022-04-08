@@ -8,6 +8,16 @@ impl Hei for &str {
     }
 }
 
+impl Hei for String {
+    fn hei(&self) {
+        println!("hei {}", self);
+    }
+}
+
+pub fn say_hei(s: &dyn Hei) {
+    s.hei()
+}
+
 pub fn strlen<S: AsRef<str>>(s: S) -> usize {
     s.as_ref().len()
 }
