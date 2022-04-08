@@ -16,10 +16,11 @@ pub fn strlen2(s: String) -> usize {
     s.len()
 }
 
-pub fn strlen_dyn(s: Box<dyn AsRef<str>>) -> usize {
+// examples of trait objects
+pub fn strlen_dyn2(s: Box<dyn AsRef<str>>) -> usize {
     s.as_ref().as_ref().len()
 }
 
-pub fn strlen_dyn2(s: &dyn AsRef<str>) -> usize {
+pub fn strlen_dyn(s: &dyn AsRef<str>) -> usize {
     s.as_ref().len()
 }

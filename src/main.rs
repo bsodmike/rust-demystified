@@ -19,9 +19,9 @@ fn main() {
 
     // Dispatch
     let x: Box<dyn AsRef<str>> = Box::new("hello".to_string());
-    strlen_dyn(x);
+    strlen_dyn2(x);
 
     // Use go-through pointer-indirection for something on the stack
     let x: &dyn AsRef<str> = &"hello".to_string();
-    strlen_dyn2(x);
+    strlen_dyn(x);
 }
