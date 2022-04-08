@@ -1,3 +1,4 @@
+/// Say hello in Norwegian
 pub trait Hei {
     fn hei(&self);
 
