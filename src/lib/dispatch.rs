@@ -1,5 +1,7 @@
 pub trait Hei {
     fn hei(&self);
+
+    fn weird() {};
 }
 
 impl Hei for &str {
