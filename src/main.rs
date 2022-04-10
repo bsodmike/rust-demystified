@@ -6,21 +6,20 @@
 #![warn(rust_2018_idioms, future_incompatible, nonstandard_style)]
 
 use clap::Parser;
-use lib::clap::{runner, Args, Implementation};
+use lib::cli::{runner, Args, Commands};
 use lib::dispatch::*;
+use log::{debug, info};
 
 mod lib;
 
 fn main() {
-    let args = Args::parse();
-    let _value: String = match args.implementation {
-        Implementation::Default => runner(|| {
-            println!("Running default");
+    env_logger::init();
 
-            "default".to_string()
-        }),
-        Implementation::Dispatch => runner(|| {
-            println!("Running dispatch");
+    let cli = Args::parse();
+
+    match &cli.command {
+        Some(Commands::Dispatch) => runner(|| {
+            info!("Running dispatch");
 
             let x: Box<dyn AsRef<str>> = Box::new("hello".to_string());
             strlen_dyn2(x);
@@ -42,9 +41,12 @@ fn main() {
             let x: &dyn Hei = &"hei";
             x.weird();
             say_hei(x);
-
-            "dispatch".to_string()
         }),
+
+        //Some(Commands::Default) => runner(|| {
+        //    info!("Running default");
+        //}),
+        _ => info!("Command not found"),
     };
     //assert_eq!(value, "hello".to_string());
 }

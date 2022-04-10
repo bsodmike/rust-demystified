@@ -1,4 +1,4 @@
-pub(crate) mod clap;
+pub(crate) mod cli;
 pub(crate) mod dispatch;
 //mod generics_1;
 //mod iterators_1;
