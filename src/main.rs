@@ -27,7 +27,9 @@ fn main() {
 
     // Use our Hei trait
     let x: &dyn Hei = &"hei".to_string();
+    x.weird();
     say_hei(x);
     let x: &dyn Hei = &"hei";
+    x.weird();
     say_hei(x);
 }
