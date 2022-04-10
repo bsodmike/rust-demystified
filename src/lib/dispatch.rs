@@ -3,6 +3,10 @@ pub trait Hei {
     fn hei(&self);
 
     fn weird(&self);
+
+    fn need_sized(self) -> Self
+    where
+        Self: Sized;
 }
 
 impl Hei for &str {
@@ -13,6 +17,10 @@ impl Hei for &str {
     fn weird(&self) {
         println!("you called wierd {}", self);
     }
+
+    fn need_sized(self) -> Self {
+        self
+    }
 }
 
 impl Hei for String {
@@ -22,6 +30,10 @@ impl Hei for String {
 
     fn weird(&self) {
         println!("you called wierd {}", self);
+    }
+
+    fn need_sized(self) -> Self {
+        self
     }
 }
 
