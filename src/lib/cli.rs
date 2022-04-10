@@ -13,6 +13,12 @@ pub(crate) struct Args {
 pub(crate) enum Commands {
     /// Tutorial on dynamic dispatch
     Dispatch,
+
+    /// Builder pattern
+    Builder,
+
+    /// Type state
+    TypeState,
 }
 
 pub(crate) fn runner<T>(mut mk: impl FnMut() -> T) -> T {

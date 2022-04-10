@@ -7,7 +7,7 @@
 
 use clap::Parser;
 use lib::cli::{runner, Args, Commands};
-use lib::dispatch::*;
+use lib::{builder::TaskManagerBuilder, dispatch::*};
 use log::{debug, info};
 
 mod lib;
@@ -19,7 +19,7 @@ fn main() {
 
     match &cli.command {
         Some(Commands::Dispatch) => runner(|| {
-            info!("Running dispatch");
+            info!("Tutorial: Dynamic dispatch\n");
 
             let x: Box<dyn AsRef<str>> = Box::new("hello".to_string());
             strlen_dyn2(x);
@@ -43,10 +43,14 @@ fn main() {
             say_hei(x);
         }),
 
-        //Some(Commands::Default) => runner(|| {
-        //    info!("Running default");
-        //}),
+        Some(Commands::Builder) => runner(|| {
+            info!("Tutorial: Builder pattern\n");
+
+            let task_manager = TaskManagerBuilder::new().count(10).build();
+
+            debug!("Task manager.count: {}", task_manager.count());
+            assert_eq!(*task_manager.count(), 10);
+        }),
         _ => info!("Command not found"),
     };
-    //assert_eq!(value, "hello".to_string());
 }
