@@ -17,7 +17,7 @@ pub(crate) enum Commands {
     /// Builder pattern
     Builder,
 
-    /// Type state
+    /// Implementing an Object-Oriented Design Pattern with Type state
     TypeState,
 }
 

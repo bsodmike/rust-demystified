@@ -7,7 +7,7 @@
 
 use clap::Parser;
 use lib::cli::{runner, Args, Commands};
-use lib::{builder::TaskManagerBuilder, dispatch::*};
+use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*};
 use log::{debug, info};
 
 mod lib;
@@ -42,7 +42,6 @@ fn main() {
             x.weird();
             say_hei(x);
         }),
-
         Some(Commands::Builder) => runner(|| {
             info!("Tutorial: Builder pattern\n");
 
@@ -51,6 +50,25 @@ fn main() {
             debug!("Task manager.count: {}", task_manager.count());
             assert_eq!(*task_manager.count(), 10);
         }),
+        Some(Commands::TypeState) => {
+            runner(|| {
+                info!("Tutorial: OOP design pattern with Type State\n");
+
+                let mut post = Post::new();
+                post.add_text("I ate a salad for lunch today");
+
+                let post = post.request_review();
+                assert_eq!("I ate a salad for lunch today", post.review());
+
+                let mut post = post.reject("Salad isn't available today");
+                assert_eq!("Make changes to 'I ate a salad for lunch today' as Salad isn't available today", post.get_feedback());
+
+                let post = post.replace_text("I ate fish at lunch");
+
+                let post = post.approve();
+                assert_eq!("I ate fish at lunch", post.content());
+            })
+        }
         _ => info!("Command not found"),
     };
 }
