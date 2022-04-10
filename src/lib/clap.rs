@@ -12,6 +12,7 @@ pub struct Args {
 #[derive(Parser, Debug)]
 pub enum Implementation {
     r#Default,
+    Dispatch,
 }
 
 impl FromStr for Implementation {
@@ -20,6 +21,7 @@ impl FromStr for Implementation {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "default" => Ok(Self::Default),
+            "dispatch" => Ok(Self::Dispatch),
             _ => Err(format!("unknown implementation {}", s)),
         }
     }
