@@ -1,4 +1,9 @@
-#![warn(rust_2018_idioms)]
+//! This is the main application
+
+#![forbid(unsafe_code)]
+#![allow(unused_imports)]
+#![deny(unreachable_pub, private_in_public, unstable_features)]
+#![warn(rust_2018_idioms, future_incompatible, nonstandard_style)]
 
 use clap::Parser;
 use lib::clap::{runner, Args, Implementation};

@@ -4,13 +4,13 @@ use std::str::FromStr;
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
-pub struct Args {
+pub(crate) struct Args {
     #[clap(short, long)]
-    pub implementation: Implementation,
+    pub(crate) implementation: Implementation,
 }
 
 #[derive(Parser, Debug)]
-pub enum Implementation {
+pub(crate) enum Implementation {
     r#Default,
     Dispatch,
 }
@@ -27,6 +27,6 @@ impl FromStr for Implementation {
     }
 }
 
-pub fn runner<T>(mut mk: impl FnMut() -> T) -> T {
+pub(crate) fn runner<T>(mut mk: impl FnMut() -> T) -> T {
     mk()
 }
