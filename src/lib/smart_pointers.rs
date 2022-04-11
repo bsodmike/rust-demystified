@@ -1,3 +1,33 @@
+use std::cell::UnsafeCell;
+
+pub(crate) struct Cell<T> {
+    value: UnsafeCell<T>,
+}
+
+impl<T> Cell<T> {
+    pub(crate) fn new(value: T) -> Self {
+        Cell {
+            value: UnsafeCell::new(value),
+        }
+    }
+
+    pub(crate) fn set(&self, value: T) {
+        // SAFETY: we know no-one else is concurrently mutating self (because !Sync)
+        // SAFETY: we're not invalidating any references as we are not sharing any.
+        unsafe { *self.value.get() = value };
+    }
+
+    pub(crate) fn get(&self) -> T
+    where
+        T: Copy,
+    {
+        // SAFETY: we know no-one else is concurrently mutating this value, since only this thread
+        // can mutate (because !Sync) and it is executing this function
+        unsafe { *self.value.get() }
+    }
+}
+
+/// Contrived example storing a String as Vec<u8>
 pub(crate) struct Message {
     content: String,
     bytes: Vec<u8>,

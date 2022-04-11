@@ -1,6 +1,7 @@
 //! This is the main application
 
-#![forbid(unsafe_code)]
+// Disabled for use of UnsafeCell
+//#![forbid(unsafe_code)]
 #![allow(unused_imports)]
 #![deny(unreachable_pub, private_in_public, unstable_features)]
 #![warn(rust_2018_idioms, future_incompatible, nonstandard_style)]
@@ -9,6 +10,8 @@ use clap::Parser;
 use lib::cli::{runner, Args, Commands};
 use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*, smart_pointers::*};
 use log::{debug, info};
+use std::io::Read;
+use std::sync::Arc;
 
 mod lib;
 
@@ -83,6 +86,28 @@ fn main() {
                 message.content_from_bytes().unwrap(),
                 "Häagen-Dazs".to_string()
             );
+
+            struct BytesToString {
+                value: String,
+            }
+
+            impl BytesToString {
+                pub(crate) fn new(value: &Vec<u8>) -> Self {
+                    Self {
+                        value: String::from_utf8(value.clone()).unwrap_or_default(),
+                    }
+                }
+            }
+
+            impl Into<String> for BytesToString {
+                fn into(self) -> String {
+                    self.value
+                }
+            }
+
+            let x = Cell::new(message.bytes());
+            let contents: String = BytesToString::new(x.get()).into();
+            assert_eq!(contents, "Häagen-Dazs".to_string());
         }),
         _ => info!("Command not found"),
     };
