@@ -7,7 +7,7 @@
 
 use clap::Parser;
 use lib::cli::{runner, Args, Commands};
-use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*};
+use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*, smart_pointers::*};
 use log::{debug, info};
 
 mod lib;
@@ -69,6 +69,15 @@ fn main() {
                 assert_eq!("I ate fish at lunch", post.content());
             })
         }
+        Some(Commands::SmartPointers) => runner(|| {
+            info!("Tutorial: Smart pointers\n");
+
+            let new_message = MessageBuilder::new().content("hello").build();
+            let new_message = new_message.update("foo");
+
+            let byte_zero: u8 = 0;
+            assert_ne!(new_message.bytes(), &vec![byte_zero]);
+        }),
         _ => info!("Command not found"),
     };
 }
