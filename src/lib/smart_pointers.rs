@@ -11,6 +11,10 @@ impl Message {
         self
     }
 
+    pub(crate) fn content_from_bytes(&self) -> Option<String> {
+        Some(String::from_utf8(self.bytes.clone()).ok()?)
+    }
+
     pub(crate) fn content(&self) -> &String {
         &self.content
     }

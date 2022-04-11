@@ -77,6 +77,12 @@ fn main() {
 
             let byte_zero: u8 = 0;
             assert_ne!(new_message.bytes(), &vec![byte_zero]);
+
+            let message = new_message.update("Häagen-Dazs");
+            assert_eq!(
+                message.content_from_bytes().unwrap(),
+                "Häagen-Dazs".to_string()
+            );
         }),
         _ => info!("Command not found"),
     };
