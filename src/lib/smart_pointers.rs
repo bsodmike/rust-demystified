@@ -4,6 +4,10 @@ pub(crate) struct Cell<T> {
     value: UnsafeCell<T>,
 }
 
+// implied by UnsafeCell
+// impl<T> !Sync for Cell<T>
+// https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html#impl-Sync
+
 impl<T> Cell<T> {
     pub(crate) fn new(value: T) -> Self {
         Cell {
