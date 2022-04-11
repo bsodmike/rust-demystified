@@ -87,6 +87,7 @@ fn main() {
                 "Häagen-Dazs".to_string()
             );
 
+            // Example of using a new-type to implement the Into trait
             struct BytesToString {
                 value: String,
             }
@@ -106,6 +107,8 @@ fn main() {
             }
 
             let x = Cell::new(message.bytes());
+
+            // BytesToString is used as a new-type to convert Vec<u8> to a String
             let contents: String = BytesToString::new(x.get()).into();
             assert_eq!(contents, "Häagen-Dazs".to_string());
         }),
