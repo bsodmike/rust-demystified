@@ -1,14 +1,17 @@
 //! This is the main application
 
-#![forbid(unsafe_code)]
+// Disabled for use of UnsafeCell
+//#![forbid(unsafe_code)]
 #![allow(unused_imports)]
 #![deny(unreachable_pub, private_in_public, unstable_features)]
 #![warn(rust_2018_idioms, future_incompatible, nonstandard_style)]
 
 use clap::Parser;
 use lib::cli::{runner, Args, Commands};
-use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*};
+use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*, smart_pointers::*};
 use log::{debug, info};
+use std::io::Read;
+use std::sync::Arc;
 
 mod lib;
 
@@ -69,6 +72,46 @@ fn main() {
                 assert_eq!("I ate fish at lunch", post.content());
             })
         }
+        Some(Commands::SmartPointers) => runner(|| {
+            info!("Tutorial: Smart pointers\n");
+
+            let new_message = MessageBuilder::new().content("hello").build();
+            let new_message = new_message.update("foo");
+
+            let byte_zero: u8 = 0;
+            assert_ne!(new_message.bytes(), &vec![byte_zero]);
+
+            let message = new_message.update("Häagen-Dazs");
+            assert_eq!(
+                message.content_from_bytes().unwrap(),
+                "Häagen-Dazs".to_string()
+            );
+
+            // Example of using a new-type to implement the Into trait
+            struct BytesToString {
+                value: String,
+            }
+
+            impl BytesToString {
+                pub(crate) fn new(value: &Vec<u8>) -> Self {
+                    Self {
+                        value: String::from_utf8(value.clone()).unwrap_or_default(),
+                    }
+                }
+            }
+
+            impl Into<String> for BytesToString {
+                fn into(self) -> String {
+                    self.value
+                }
+            }
+
+            let x = Cell::new(message.bytes());
+
+            // BytesToString is used as a new-type to convert Vec<u8> to a String
+            let contents: String = BytesToString::new(x.get()).into();
+            assert_eq!(contents, "Häagen-Dazs".to_string());
+        }),
         _ => info!("Command not found"),
     };
 }

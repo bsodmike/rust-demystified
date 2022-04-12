@@ -19,6 +19,9 @@ pub(crate) enum Commands {
 
     /// Implementing an Object-Oriented Design Pattern with Type state
     TypeState,
+
+    /// Smart pointers
+    SmartPointers,
 }
 
 pub(crate) fn runner<T>(mut mk: impl FnMut() -> T) -> T {
