@@ -1,5 +1,8 @@
 use std::cell::UnsafeCell;
 
+// Further coverage of Cell, RefCell and Rc (https://youtu.be/8O0Nt9qY_vo):
+// https://gist.github.com/jonhoo/7cfdfe581e5108b79c2a4e9fbde38de8
+
 pub(crate) struct Cell<T> {
     value: UnsafeCell<T>,
 }
