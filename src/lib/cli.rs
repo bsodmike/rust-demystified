@@ -1,3 +1,4 @@
+use anyhow::{Error, Result};
 use clap::{Parser, Subcommand};
 use std::str::FromStr;
 
@@ -22,8 +23,11 @@ pub(crate) enum Commands {
 
     /// Smart pointers
     SmartPointers,
+
+    /// Traits
+    Traits,
 }
 
-pub(crate) fn runner<T>(mut mk: impl FnMut() -> T) -> T {
+pub(crate) fn runner<T>(mut mk: impl FnMut() -> Result<T>) -> Result<T> {
     mk()
 }

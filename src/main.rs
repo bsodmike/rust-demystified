@@ -6,16 +6,17 @@
 #![deny(unreachable_pub, private_in_public, unstable_features)]
 #![warn(rust_2018_idioms, future_incompatible, nonstandard_style)]
 
+use anyhow::{Error, Result};
 use clap::Parser;
 use lib::cli::{runner, Args, Commands};
-use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*, smart_pointers::*};
+use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*, smart_pointers::*, traits};
 use log::{debug, info};
 use std::io::Read;
 use std::sync::Arc;
 
-mod lib;
+pub mod lib;
 
-fn main() {
+fn main() -> Result<()> {
     env_logger::init();
 
     let cli = Args::parse();
@@ -44,7 +45,9 @@ fn main() {
             let x: &dyn Hei = &"hei";
             x.weird();
             say_hei(x);
-        }),
+
+            Ok(())
+        })?,
         Some(Commands::Builder) => runner(|| {
             info!("Tutorial: Builder pattern\n");
 
@@ -52,7 +55,9 @@ fn main() {
 
             debug!("Task manager.count: {}", task_manager.count());
             assert_eq!(*task_manager.count(), 10);
-        }),
+
+            Ok(())
+        })?,
         Some(Commands::TypeState) => {
             runner(|| {
                 info!("Tutorial: OOP design pattern with Type State\n");
@@ -70,7 +75,8 @@ fn main() {
 
                 let post = post.approve();
                 assert_eq!("I ate fish at lunch", post.content());
-            })
+                Ok(())
+            })?
         }
         Some(Commands::SmartPointers) => runner(|| {
             info!("Tutorial: Smart pointers\n");
@@ -111,7 +117,18 @@ fn main() {
             // BytesToString is used as a new-type to convert Vec<u8> to a String
             let contents: String = BytesToString::new(x.get()).into();
             assert_eq!(contents, "Häagen-Dazs".to_string());
-        }),
+
+            Ok(())
+        })?,
+        Some(Commands::Traits) => runner(|| {
+            info!("Tutorial: Traits\n");
+
+            traits::runner()?;
+
+            Ok(())
+        })?,
         _ => info!("Command not found"),
     };
+
+    Ok(())
 }
