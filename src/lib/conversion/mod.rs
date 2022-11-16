@@ -87,16 +87,7 @@ pub mod embedded_rtc {
         // Returns the first 3-letters of the day of the week
         pub fn to_short(&self) -> Result<String> {
             let day = self.to_s();
-
-            // let resp: Vec<char> = day
-            //     .chars()
-            //     .enumerate()
-            //     .map(|(i, x)| if i <= 2 { x } else { char::default() })
-            //     .collect();
-            // let res = resp[0..3].to_vec();
-
-            let result = String::from_utf8(day[0..3].as_bytes().to_vec())?;
-            println!("{:?}", result);
+            let result: String = day.chars().take(3).collect();
 
             Ok(result)
         }
@@ -127,8 +118,7 @@ pub mod embedded_rtc {
         let weekday_value = weekday.value();
         assert_eq!(weekday_value, 4);
         assert_eq!(weekday.to_s(), "Tuesday");
-
-        weekday.to_short();
+        assert_eq!(weekday.to_short()?, "Tue");
 
         Ok(())
     }
