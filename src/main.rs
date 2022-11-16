@@ -15,6 +15,7 @@ use std::io::Read;
 use std::sync::Arc;
 
 pub mod lib;
+// pub mod sandbox;
 
 fn main() -> Result<()> {
     env_logger::init();
@@ -124,6 +125,13 @@ fn main() -> Result<()> {
             info!("Tutorial: Traits\n");
 
             traits::runner()?;
+
+            Ok(())
+        })?,
+        Some(Commands::Conversion) => runner(|| {
+            info!("Tutorial: Conversion\n");
+
+            lib::conversion::runner()?;
 
             Ok(())
         })?,

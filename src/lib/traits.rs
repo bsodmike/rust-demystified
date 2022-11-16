@@ -1,6 +1,11 @@
 use anyhow::{Error, Result};
-use std::fmt::Display;
+use log::info;
+use std::{
+    error::Error as StdError,
+    fmt::{self, Display},
+};
 
+// Lesson 1
 pub fn x(b: Box<impl Display + 'static>) -> Box<dyn Display> {
     b
 }
@@ -21,7 +26,100 @@ impl Display for Device {
     }
 }
 
+// Error
+pub type BoxError = Box<dyn std::error::Error + Send + Sync>;
+
+#[derive(Debug)]
+pub struct BlanketError {
+    inner: BoxError,
+}
+
+impl BlanketError {
+    /// Create a new `Error` from a boxable error.
+    pub fn new(error: impl Into<BoxError>) -> Self {
+        Self {
+            inner: error.into(),
+        }
+    }
+
+    /// Convert an `Error` back into the underlying boxed trait object.
+    pub fn into_inner(self) -> BoxError {
+        self.inner
+    }
+}
+
+impl fmt::Display for BlanketError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.inner.fmt(f)
+    }
+}
+
+impl StdError for BlanketError {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        Some(&*self.inner)
+    }
+}
+
+// Lesson 2: Traits
+pub trait RTC {
+    type Error: ErrorType;
+}
+
+pub trait ErrorType: Display {
+    /// Error type
+    type Error: std::error::Error;
+}
+
+// What does this do exactly?
+impl<T: ErrorType> ErrorType for &mut T {
+    type Error = T::Error;
+}
+
+impl ErrorType for BlanketError {
+    type Error = Self;
+}
+
+struct RTCDevice(u8);
+
+impl RTC for RTCDevice {
+    type Error = BlanketError;
+}
+
+impl fmt::Display for RTCDevice {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl ErrorType for RTCDevice {
+    type Error = BlanketError;
+}
+
 pub fn runner() -> Result<()> {
+    lesson_1_add_trait_bound_to_parameter();
+
+    lesson_2();
+
+    Ok(())
+}
+
+fn test_mut_t<T>(device: T, message: &str)
+where
+    T: ErrorType,
+{
+    info!("{}", message);
+}
+
+fn lesson_2() {
+    let device = RTCDevice(1);
+    test_mut_t::<RTCDevice>(device, "This is a standard use of `T: Trait`");
+
+    // This works with the "forwarding impl" for `&mut T`.  It is handy to note that `T: Trait`, doesn't automatically mean `&mut T: Trait`. You have to write a "forwarding impl" for that. These are fairly common. &mut has them for Iterator, Write, Display, Debug, and more, for example
+    let mut device = RTCDevice(1);
+    test_mut_t::<&mut RTCDevice>(&mut device, "Here we are using `&mut T: Trait`");
+}
+
+fn lesson_1_add_trait_bound_to_parameter() {
     let device = Device::new(1);
 
     // If we try to run `let resp = x(Box::new(device));`, notice that we have not satisfied the trait bound that is specified on `x`.
@@ -42,6 +140,4 @@ pub fn runner() -> Result<()> {
     // 4  | pub fn x(b: Box<impl Display + 'static>) -> Box<dyn Display> {
     //    |                      ^^^^^^^ required by this bound in `x`
     let resp = x(Box::new(device));
-
-    Ok(())
 }

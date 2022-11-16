@@ -26,6 +26,9 @@ pub(crate) enum Commands {
 
     /// Traits
     Traits,
+
+    /// Conversion
+    Conversion,
 }
 
 pub(crate) fn runner<T>(mut mk: impl FnMut() -> Result<T>) -> Result<T> {
