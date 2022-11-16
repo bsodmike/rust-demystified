@@ -3,6 +3,7 @@ use anyhow::Result;
 pub fn runner() -> Result<()> {
     lesson_1()?;
     lesson_2()?;
+    embedded_rtc::lesson_3()?;
 
     Ok(())
 }
@@ -43,4 +44,92 @@ pub fn lesson_2() -> Result<()> {
     // let resp: u16 = value.into();
 
     Ok(())
+}
+
+pub mod embedded_rtc {
+    use super::*;
+    use std::fmt;
+
+    #[derive(Debug, Clone, Copy)]
+    pub enum Weekday {
+        Sunday = 1,
+        Monday = 2,
+        Tuesday = 4,
+        Wednesday = 8,
+        Thursday = 16,
+        Friday = 32,
+        Saturday = 64,
+    }
+
+    impl fmt::Display for Weekday {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.to_s())
+        }
+    }
+
+    impl Weekday {
+        pub fn value(&self) -> u8 {
+            *self as u8
+        }
+
+        pub fn to_s(&self) -> String {
+            match self {
+                Self::Sunday => "Sunday".to_string(),
+                Self::Monday => "Monday".to_string(),
+                Self::Tuesday => "Tuesday".to_string(),
+                Self::Wednesday => "Wednesday".to_string(),
+                Self::Thursday => "Thursday".to_string(),
+                Self::Friday => "Friday".to_string(),
+                Self::Saturday => "Saturday".to_string(),
+            }
+        }
+
+        // Returns the first 3-letters of the day of the week
+        pub fn to_short(&self) -> Result<String> {
+            let day = self.to_s();
+
+            // let resp: Vec<char> = day
+            //     .chars()
+            //     .enumerate()
+            //     .map(|(i, x)| if i <= 2 { x } else { char::default() })
+            //     .collect();
+            // let res = resp[0..3].to_vec();
+
+            let result = String::from_utf8(day[0..3].as_bytes().to_vec())?;
+            println!("{:?}", result);
+
+            Ok(result)
+        }
+    }
+
+    impl From<u8> for Weekday {
+        fn from(day: u8) -> Self {
+            match day {
+                1 => Self::Sunday,
+                2 => Self::Monday,
+                4 => Self::Tuesday,
+                8 => Self::Wednesday,
+                16 => Self::Thursday,
+                32 => Self::Friday,
+                64 => Self::Saturday,
+                _ => Self::Sunday,
+            }
+        }
+    }
+
+    pub fn lesson_3() -> Result<()> {
+        let weekday_num = 4 as u8;
+
+        // This is possible since we added the `From<_>` trait above
+        // via `impl From<u8> for Weekday { //... }`
+        let weekday = Weekday::from(weekday_num);
+
+        let weekday_value = weekday.value();
+        assert_eq!(weekday_value, 4);
+        assert_eq!(weekday.to_s(), "Tuesday");
+
+        weekday.to_short();
+
+        Ok(())
+    }
 }
