@@ -3,7 +3,7 @@ use std::cell::UnsafeCell;
 // Further coverage of Cell, RefCell and Rc (https://youtu.be/8O0Nt9qY_vo):
 // https://gist.github.com/jonhoo/7cfdfe581e5108b79c2a4e9fbde38de8
 
-pub(crate) struct Cell<T> {
+pub struct Cell<T> {
     value: UnsafeCell<T>,
 }
 
@@ -12,19 +12,19 @@ pub(crate) struct Cell<T> {
 // https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html#impl-Sync
 
 impl<T> Cell<T> {
-    pub(crate) fn new(value: T) -> Self {
+    pub fn new(value: T) -> Self {
         Cell {
             value: UnsafeCell::new(value),
         }
     }
 
-    pub(crate) fn set(&self, value: T) {
+    pub fn set(&self, value: T) {
         // SAFETY: we know no-one else is concurrently mutating self (because !Sync)
         // SAFETY: we're not invalidating any references as we are not sharing any.
         unsafe { *self.value.get() = value };
     }
 
-    pub(crate) fn get(&self) -> T
+    pub fn get(&self) -> T
     where
         T: Copy,
     {
@@ -35,49 +35,49 @@ impl<T> Cell<T> {
 }
 
 /// Contrived example storing a String as Vec<u8>
-pub(crate) struct Message {
+pub struct Message {
     content: String,
     bytes: Vec<u8>,
 }
 
 impl Message {
-    pub(crate) fn update(mut self, content: &str) -> Self {
+    pub fn update(mut self, content: &str) -> Self {
         let bytes: Vec<u8> = content.to_string().as_bytes().to_vec();
         self.bytes = bytes;
 
         self
     }
 
-    pub(crate) fn content_from_bytes(&self) -> Option<String> {
+    pub fn content_from_bytes(&self) -> Option<String> {
         Some(String::from_utf8(self.bytes.clone()).ok()?)
     }
 
-    pub(crate) fn content(&self) -> &String {
+    pub fn content(&self) -> &String {
         &self.content
     }
 
-    pub(crate) fn bytes(&self) -> &Vec<u8> {
+    pub fn bytes(&self) -> &Vec<u8> {
         &self.bytes
     }
 }
 
-pub(crate) struct MessageBuilder {
+pub struct MessageBuilder {
     content: String,
 }
 
 impl MessageBuilder {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             content: String::default(),
         }
     }
 
-    pub(crate) fn content(mut self, content: &str) -> Self {
+    pub fn content(mut self, content: &str) -> Self {
         self.content = content.to_string();
         self
     }
 
-    pub(crate) fn build(&self) -> Message {
+    pub fn build(&self) -> Message {
         Message {
             content: self.content.to_string(),
             bytes: vec![0],

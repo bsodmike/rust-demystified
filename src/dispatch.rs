@@ -1,5 +1,5 @@
 /// Say hello in Norwegian
-pub(crate) trait Hei {
+pub trait Hei {
     fn hei(&self);
 
     fn weird(&self);
@@ -37,23 +37,23 @@ impl Hei for String {
     }
 }
 
-pub(crate) fn say_hei(s: &dyn Hei) {
+pub fn say_hei(s: &dyn Hei) {
     s.hei()
 }
 
-pub(crate) fn strlen<S: AsRef<str>>(s: S) -> usize {
+pub fn strlen<S: AsRef<str>>(s: S) -> usize {
     s.as_ref().len()
 }
 
-pub(crate) fn strlen2(s: String) -> usize {
+pub fn strlen2(s: String) -> usize {
     s.len()
 }
 
 // examples of trait objects
-pub(crate) fn strlen_dyn2(s: Box<dyn AsRef<str>>) -> usize {
+pub fn strlen_dyn2(s: Box<dyn AsRef<str>>) -> usize {
     s.as_ref().as_ref().len()
 }
 
-pub(crate) fn strlen_dyn(s: &dyn AsRef<str>) -> usize {
+pub fn strlen_dyn(s: &dyn AsRef<str>) -> usize {
     s.as_ref().len()
 }

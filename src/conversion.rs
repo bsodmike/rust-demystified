@@ -16,6 +16,9 @@ pub fn lesson_1() -> Result<()> {
     let resp2 = u16::from(value);
     assert_eq!(resp, resp2);
 
+    let formal = <u8 as Into<u16>>::into(value);
+    let shorter = value as u16;
+
     Ok(())
 }
 

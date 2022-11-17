@@ -1,51 +1,51 @@
-pub(crate) struct Post {
+pub struct Post {
     content: String,
 }
 
-pub(crate) struct DraftPost {
+pub struct DraftPost {
     content: String,
 }
 
 impl Post {
-    pub(crate) fn new() -> DraftPost {
+    pub fn new() -> DraftPost {
         DraftPost {
             content: String::new(),
         }
     }
 
-    pub(crate) fn content(&self) -> &str {
+    pub fn content(&self) -> &str {
         &self.content
     }
 }
 
 impl DraftPost {
-    pub(crate) fn add_text(&mut self, text: &str) {
+    pub fn add_text(&mut self, text: &str) {
         self.content.push_str(text);
     }
 
-    pub(crate) fn request_review(self) -> PendingReviewPost {
+    pub fn request_review(self) -> PendingReviewPost {
         PendingReviewPost {
             content: self.content,
         }
     }
 }
 
-pub(crate) struct PendingReviewPost {
+pub struct PendingReviewPost {
     content: String,
 }
 
 impl PendingReviewPost {
-    pub(crate) fn review(&self) -> &String {
+    pub fn review(&self) -> &String {
         &self.content
     }
 
-    pub(crate) fn approve(self) -> Post {
+    pub fn approve(self) -> Post {
         Post {
             content: self.content,
         }
     }
 
-    pub(crate) fn reject(self, changes: &str) -> RequestChangesPost {
+    pub fn reject(self, changes: &str) -> RequestChangesPost {
         RequestChangesPost {
             content: self.content,
             changes: changes.to_string(),
@@ -53,17 +53,17 @@ impl PendingReviewPost {
     }
 }
 
-pub(crate) struct RequestChangesPost {
+pub struct RequestChangesPost {
     content: String,
     changes: String,
 }
 
 impl RequestChangesPost {
-    pub(crate) fn get_feedback(&self) -> String {
+    pub fn get_feedback(&self) -> String {
         format!("Make changes to '{}' as {}", &self.content, &self.changes)
     }
 
-    pub(crate) fn replace_text(&mut self, text: &str) -> PendingReviewPost {
+    pub fn replace_text(&mut self, text: &str) -> PendingReviewPost {
         PendingReviewPost {
             content: text.to_string(),
         }

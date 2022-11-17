@@ -5,13 +5,13 @@ use std::str::FromStr;
 /// Program to run rust tutorials
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
-pub(crate) struct Args {
+pub struct Args {
     #[clap(subcommand)]
-    pub(crate) command: Option<Commands>,
+    pub command: Option<Commands>,
 }
 
 #[derive(Subcommand, Debug)]
-pub(crate) enum Commands {
+pub enum Commands {
     /// Tutorial on dynamic dispatch
     Dispatch,
 
@@ -31,6 +31,6 @@ pub(crate) enum Commands {
     Conversion,
 }
 
-pub(crate) fn runner<T>(mut mk: impl FnMut() -> Result<T>) -> Result<T> {
+pub fn runner<T>(mut mk: impl FnMut() -> Result<T>) -> Result<T> {
     mk()
 }

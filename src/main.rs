@@ -8,14 +8,13 @@
 
 use anyhow::{Error, Result};
 use clap::Parser;
-use lib::cli::{runner, Args, Commands};
-use lib::{builder::TaskManagerBuilder, dispatch::*, oop_pattern::*, smart_pointers::*, traits};
 use log::{debug, info};
 use std::io::Read;
 use std::sync::Arc;
-
-pub mod lib;
-// pub mod sandbox;
+use tutorials::cli::{runner, Args, Commands};
+use tutorials::{
+    builder::TaskManagerBuilder, dispatch::*, oop_pattern::*, smart_pointers::*, traits,
+};
 
 fn main() -> Result<()> {
     env_logger::init();
@@ -131,7 +130,7 @@ fn main() -> Result<()> {
         Some(Commands::Conversion) => runner(|| {
             info!("Tutorial: Conversion\n");
 
-            lib::conversion::runner()?;
+            tutorials::conversion::runner()?;
 
             Ok(())
         })?,
