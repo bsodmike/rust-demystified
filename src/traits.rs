@@ -104,7 +104,10 @@ pub fn runner() -> Result<()> {
 }
 /// Use `esp_idf_hal` as an example for advanced used of Traits and trait objects
 mod lesson_3 {
-    use crate::into_ref;
+    use crate::{
+        into_ref,
+        traits::lesson_3::peripheral::{Peripheral, PeripheralRef},
+    };
     use anyhow::Result;
 
     mod core {
@@ -623,19 +626,23 @@ mod lesson_3 {
     }
 
     pub fn run() -> Result<()> {
-        use self::core::*;
         use gpio::*;
-        use peripheral::{Peripheral, PeripheralRef};
+        use std::ops::Deref;
 
         gpio::pin!(Gpio0:0, IO);
         gpio::pin!(Gpio34:34, Input);
 
         unsafe {
             let pin = Gpio0::new();
-            gpio::PinDriver::output(pin);
+            gpio::PinDriver::output(pin)?;
 
-            let pin2 = Gpio34::new();
-            gpio::PinDriver::input(pin2);
+            let mut pin2 = Gpio34::new();
+            let pin2_ref = pin2.into_ref();
+
+            let driver = gpio::PinDriver::input(pin2_ref)?;
+            driver.into_input()?;
+
+            // let pin2_d = pin2_ref.deref();
         }
 
         Ok(())
