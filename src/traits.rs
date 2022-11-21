@@ -97,10 +97,549 @@ impl ErrorType for RTCDevice {
 
 pub fn runner() -> Result<()> {
     lesson_1_add_trait_bound_to_parameter();
-
     lesson_2();
+    lesson_3::run()?;
 
     Ok(())
+}
+/// Use `esp_idf_hal` as an example for advanced used of Traits and trait objects
+mod lesson_3 {
+    use crate::into_ref;
+    use anyhow::Result;
+
+    mod core {
+
+        #[macro_export]
+        #[allow(unused_macros)]
+        macro_rules! into_ref {
+            ($($name:ident),*) => {
+                $(
+                    let $name = $name.into_ref();
+                )*
+            }
+        }
+
+        #[allow(unused_macros)]
+        macro_rules! impl_peripheral_trait {
+            ($type:ident) => {
+                unsafe impl Send for $type {}
+
+                impl $crate::traits::lesson_3::peripheral::sealed::Sealed for $type {}
+
+                impl $crate::traits::lesson_3::peripheral::Peripheral for $type {
+                    type P = $type;
+
+                    #[inline]
+                    unsafe fn clone_unchecked(&mut self) -> Self::P {
+                        $type { ..*self }
+                    }
+                }
+            };
+        }
+
+        #[allow(unused_macros)]
+        macro_rules! impl_peripheral {
+            ($type:ident) => {
+                pub struct $type(::core::marker::PhantomData<*const ()>);
+
+                impl $type {
+                    /// # Safety
+                    ///
+                    /// Care should be taken not to instnatiate this peripheralinstance, if it is already instantiated and used elsewhere
+                    #[inline(always)]
+                    pub unsafe fn new() -> Self {
+                        $type(::core::marker::PhantomData)
+                    }
+                }
+
+                $crate::traits::lesson_3::core::impl_peripheral_trait!($type);
+            };
+        }
+
+        #[allow(unused_imports)]
+        pub(crate) use impl_peripheral;
+        #[allow(unused_imports)]
+        pub(crate) use impl_peripheral_trait;
+        #[allow(unused_imports)]
+        pub(crate) use into_ref;
+    }
+
+    mod peripheral {
+        use core::marker::PhantomData;
+        use core::ops::{Deref, DerefMut};
+
+        pub struct PeripheralRef<'a, T> {
+            inner: T,
+            _lifetime: PhantomData<&'a mut T>,
+        }
+
+        impl<'a, T> PeripheralRef<'a, T> {
+            #[inline]
+            pub fn new(inner: T) -> Self {
+                Self {
+                    inner,
+                    _lifetime: PhantomData,
+                }
+            }
+
+            /// Unsafely clone (duplicate) a Peripheral singleton.
+            ///
+            /// # Safety
+            ///
+            /// This returns an owned clone of the Peripheral. You must manually ensure
+            /// only one copy of the Peripheral is in use at a time. For example, don't
+            /// create two SPI drivers on `SPI1`, because they will "fight" each other.
+            ///
+            /// You should strongly prefer using `reborrow()` instead. It returns a
+            /// `PeripheralRef` that borrows `self`, which allows the borrow checker
+            /// to enforce this at compile time.
+            pub unsafe fn clone_unchecked(&mut self) -> PeripheralRef<'a, T>
+            where
+                T: Peripheral<P = T>,
+            {
+                PeripheralRef::new(self.inner.clone_unchecked())
+            }
+
+            /// Reborrow into a "child" PeripheralRef.
+            ///
+            /// `self` will stay borrowed until the child PeripheralRef is dropped.
+            pub fn reborrow(&mut self) -> PeripheralRef<'_, T>
+            where
+                T: Peripheral<P = T>,
+            {
+                // safety: we're returning the clone inside a new PeripheralRef that borrows
+                // self, so user code can't use both at the same time.
+                PeripheralRef::new(unsafe { self.inner.clone_unchecked() })
+            }
+
+            /// Map the inner Peripheral using `Into`.
+            ///
+            /// This converts from `PeripheralRef<'a, T>` to `PeripheralRef<'a, U>`, using an
+            /// `Into` impl to convert from `T` to `U`.
+            ///
+            /// For example, this can be useful to degrade GPIO pins: converting from PeripheralRef<'a, PB11>` to `PeripheralRef<'a, AnyPin>`.
+            #[inline]
+            pub fn map_into<U>(self) -> PeripheralRef<'a, U>
+            where
+                T: Into<U>,
+            {
+                PeripheralRef {
+                    inner: self.inner.into(),
+                    _lifetime: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, T> Deref for PeripheralRef<'a, T> {
+            type Target = T;
+
+            #[inline]
+            fn deref(&self) -> &Self::Target {
+                &self.inner
+            }
+        }
+
+        impl<'a, T> DerefMut for PeripheralRef<'a, T> {
+            #[inline]
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.inner
+            }
+        }
+
+        /// Trait for any type that can be used as a Peripheral of type `P`.
+        ///
+        /// This is used in driver constructors, to allow passing either owned Peripherals (e.g. `TWISPI0`),
+        /// or borrowed Peripherals (e.g. `&mut TWISPI0`).
+        ///
+        /// For example, if you have a driver with a constructor like this:
+        ///
+        /// ```ignore
+        /// impl<'d, T: Instance> Twim<'d, T> {
+        ///     pub fn new(
+        ///         twim: impl Peripheral<P = T> + 'd,
+        ///         irq: impl Peripheral<P = T::Interrupt> + 'd,
+        ///         sda: impl Peripheral<P = impl GpioPin> + 'd,
+        ///         scl: impl Peripheral<P = impl GpioPin> + 'd,
+        ///         config: Config,
+        ///     ) -> Self { .. }
+        /// }
+        /// ```
+        ///
+        /// You may call it with owned Peripherals, which yields an instance that can live forever (`'static`):
+        ///
+        /// ```ignore
+        /// let mut twi: Twim<'static, ...> = Twim::new(p.TWISPI0, irq, p.P0_03, p.P0_04, config);
+        /// ```
+        ///
+        /// Or you may call it with borrowed Peripherals, which yields an instance that can only live for as long
+        /// as the borrows last:
+        ///
+        /// ```ignore
+        /// let mut twi: Twim<'_, ...> = Twim::new(&mut p.TWISPI0, &mut irq, &mut p.P0_03, &mut p.P0_04, config);
+        /// ```
+        ///
+        /// # Implementation details, for HAL authors
+        ///
+        /// When writing a HAL, the intended way to use this trait is to take `impl Peripheral<P = ..>` in
+        /// the HAL's public API (such as driver constructors), calling `.into_ref()` to obtain a `PeripheralRef`,
+        /// and storing that in the driver struct.
+        ///
+        /// `.into_ref()` on an owned `T` yields a `PeripheralRef<'static, T>`.
+        /// `.into_ref()` on an `&'a mut T` yields a `PeripheralRef<'a, T>`.
+        pub trait Peripheral: Sized + sealed::Sealed {
+            /// Peripheral singleton type
+            type P;
+
+            /// Unsafely clone (duplicate) a Peripheral singleton.
+            ///
+            /// # Safety
+            ///
+            /// This returns an owned clone of the Peripheral. You must manually ensure
+            /// only one copy of the Peripheral is in use at a time. For example, don't
+            /// create two SPI drivers on `SPI1`, because they will "fight" each other.
+            ///
+            /// You should strongly prefer using `into_ref()` instead. It returns a
+            /// `PeripheralRef`, which allows the borrow checker to enforce this at compile time.
+            unsafe fn clone_unchecked(&mut self) -> Self::P;
+
+            /// Convert a value into a `PeripheralRef`.
+            ///
+            /// When called on an owned `T`, yields a `PeripheralRef<'static, T>`.
+            /// When called on an `&'a mut T`, yields a `PeripheralRef<'a, T>`.
+            #[inline]
+            fn into_ref<'a>(mut self) -> PeripheralRef<'a, Self::P>
+            where
+                Self: 'a,
+            {
+                PeripheralRef::new(unsafe { self.clone_unchecked() })
+            }
+        }
+
+        impl<T: DerefMut> sealed::Sealed for T {}
+
+        impl<T: DerefMut> Peripheral for T
+        where
+            T::Target: Peripheral,
+        {
+            type P = <T::Target as Peripheral>::P;
+
+            #[inline]
+            unsafe fn clone_unchecked(&mut self) -> Self::P {
+                self.deref_mut().clone_unchecked()
+            }
+        }
+
+        pub(crate) mod sealed {
+            pub trait Sealed {}
+        }
+    }
+
+    mod gpio {
+        use super::core::impl_peripheral_trait;
+        use super::peripheral::{Peripheral, PeripheralRef};
+        use anyhow::Result;
+        use core::marker::PhantomData;
+
+        /// A trait implemented by every pin instance
+        pub trait Pin: Peripheral<P = Self> + Sized + Send + 'static {
+            fn pin(&self) -> i32;
+        }
+
+        /// A marker trait designating a pin which is capable of
+        /// operating as an input pin
+        pub trait InputPin: Pin + Into<AnyInputPin> {
+            fn downgrade_input(self) -> AnyInputPin {
+                self.into()
+            }
+        }
+
+        /// A marker trait designating a pin which is capable of
+        /// operating as an output pin
+        pub trait OutputPin: Pin + Into<AnyOutputPin> {
+            fn downgrade_output(self) -> AnyOutputPin {
+                self.into()
+            }
+        }
+
+        /// A marker trait designating a pin which is capable of
+        /// operating as an input and output pin
+        pub trait IOPin: InputPin + OutputPin + Into<AnyIOPin> {
+            fn downgrade(self) -> AnyIOPin {
+                self.into()
+            }
+        }
+
+        /// Generic Gpio input-output pin
+        pub struct AnyIOPin {
+            pin: i32,
+            _p: PhantomData<*const ()>,
+        }
+
+        impl AnyIOPin {
+            /// # Safety
+            ///
+            /// Care should be taken not to instantiate this Pin, if it is
+            /// already instantiated and used elsewhere, or if it is not set
+            /// already in the mode of operation which is being instantiated
+            pub unsafe fn new(pin: i32) -> Self {
+                Self {
+                    pin,
+                    _p: PhantomData,
+                }
+            }
+        }
+
+        impl_peripheral_trait!(AnyIOPin);
+
+        impl Pin for AnyIOPin {
+            fn pin(&self) -> i32 {
+                self.pin
+            }
+        }
+
+        impl InputPin for AnyIOPin {}
+        impl OutputPin for AnyIOPin {}
+
+        /// Generic Gpio input pin
+        pub struct AnyInputPin {
+            pin: i32,
+            _p: PhantomData<*const ()>,
+        }
+
+        impl AnyInputPin {
+            /// # Safety
+            ///
+            /// Care should be taken not to instantiate this Pin, if it is
+            /// already instantiated and used elsewhere, or if it is not set
+            /// already in the mode of operation which is being instantiated
+            pub unsafe fn new(pin: i32) -> Self {
+                Self {
+                    pin,
+                    _p: PhantomData,
+                }
+            }
+        }
+
+        impl_peripheral_trait!(AnyInputPin);
+
+        impl Pin for AnyInputPin {
+            fn pin(&self) -> i32 {
+                self.pin
+            }
+        }
+
+        impl InputPin for AnyInputPin {}
+
+        impl From<AnyIOPin> for AnyInputPin {
+            fn from(pin: AnyIOPin) -> Self {
+                unsafe { Self::new(pin.pin()) }
+            }
+        }
+
+        /// Generic Gpio output pin
+        pub struct AnyOutputPin {
+            pin: i32,
+            _p: PhantomData<*const ()>,
+        }
+
+        impl AnyOutputPin {
+            /// # Safety
+            ///
+            /// Care should be taken not to instantiate this Pin, if it is
+            /// already instantiated and used elsewhere, or if it is not set
+            /// already in the mode of operation which is being instantiated
+            pub unsafe fn new(pin: i32) -> Self {
+                Self {
+                    pin,
+                    _p: PhantomData,
+                }
+            }
+        }
+
+        impl_peripheral_trait!(AnyOutputPin);
+
+        impl Pin for AnyOutputPin {
+            fn pin(&self) -> i32 {
+                self.pin
+            }
+        }
+
+        impl OutputPin for AnyOutputPin {}
+
+        impl From<AnyIOPin> for AnyOutputPin {
+            fn from(pin: AnyIOPin) -> Self {
+                unsafe { Self::new(pin.pin()) }
+            }
+        }
+
+        pub struct Output;
+        pub struct Input;
+
+        /// A driver for a GPIO pin.
+        ///
+        /// The driver can set the pin as a disconnected/disabled one, input, or output pin, or both or analog.
+        /// On some chips (i.e. esp32 and esp32s*), the driver can also set the pin in RTC IO mode.
+        /// Depending on the current operating mode, different sets of functions are available.
+        ///
+        /// The mode-setting depends on the capabilities of the pin as well, i.e. input-only pins cannot be set
+        /// into output or input-output mode.
+        pub struct PinDriver<'d, T: Pin, MODE> {
+            pin: PeripheralRef<'d, T>,
+            _mode: PhantomData<MODE>,
+        }
+
+        impl<'d, T: InputPin> PinDriver<'d, T, Input> {
+            /// Creates the driver for a pin in input state.
+            #[inline]
+            pub fn input(pin: impl Peripheral<P = T> + 'd) -> Result<Self> {
+                crate::into_ref!(pin);
+
+                Self {
+                    pin,
+                    _mode: PhantomData,
+                }
+                .into_input()
+            }
+        }
+
+        impl<'d, T: OutputPin> PinDriver<'d, T, Output> {
+            /// Creates the driver for a pin in output state.
+            #[inline]
+            pub fn output(pin: impl Peripheral<P = T> + 'd) -> Result<Self> {
+                crate::into_ref!(pin);
+
+                Self {
+                    pin,
+                    _mode: PhantomData,
+                }
+                .into_output()
+            }
+        }
+
+        impl<'d, T: Pin, MODE> PinDriver<'d, T, MODE> {
+            /// Returns the pin number.
+            pub fn pin(&self) -> i32 {
+                self.pin.pin()
+            }
+
+            /// Put the pin into input mode.
+            #[inline]
+            pub fn into_input(self) -> Result<PinDriver<'d, T, Input>>
+            where
+                T: InputPin,
+            {
+                self.into_mode("input")
+            }
+
+            /// Put the pin into output mode.
+            #[inline]
+            pub fn into_output(self) -> Result<PinDriver<'d, T, Output>>
+            where
+                T: OutputPin,
+            {
+                self.into_mode("output")
+            }
+
+            #[inline]
+            fn into_mode<M>(mut self, mode: &str) -> Result<PinDriver<'d, T, M>>
+            where
+                T: Pin,
+            {
+                let pin = unsafe { self.pin.clone_unchecked() };
+
+                drop(self);
+
+                if mode != "disabled" {
+                    // esp!(unsafe { gpio_set_direction(pin.pin(), mode) })?;
+                }
+
+                Ok(PinDriver {
+                    pin,
+                    _mode: PhantomData,
+                })
+            }
+        }
+
+        unsafe impl<'d, T: Pin, MODE> Send for PinDriver<'d, T, MODE> {}
+
+        macro_rules! impl_input {
+            ($pxi:ident: $pin:expr) => {
+                $crate::traits::lesson_3::core::impl_peripheral!($pxi);
+
+                impl $crate::traits::lesson_3::gpio::Pin for $pxi {
+                    fn pin(&self) -> i32 {
+                        $pin
+                    }
+                }
+
+                impl InputPin for $pxi {}
+
+                impl From<$pxi> for AnyInputPin {
+                    fn from(pin: $pxi) -> Self {
+                        unsafe { Self::new(pin.pin()) }
+                    }
+                }
+            };
+        }
+
+        macro_rules! impl_input_output {
+            ($pxi:ident: $pin:expr) => {
+                $crate::traits::lesson_3::gpio::impl_input!($pxi: $pin);
+
+                impl OutputPin for $pxi {}
+
+                impl IOPin for $pxi {}
+
+                impl From<$pxi> for AnyOutputPin {
+                    fn from(pin: $pxi) -> Self {
+                        unsafe { Self::new(pin.pin()) }
+                    }
+                }
+
+                impl From<$pxi> for AnyIOPin {
+                    fn from(pin: $pxi) -> Self {
+                        unsafe { Self::new(pin.pin()) }
+                    }
+                }
+            };
+        }
+
+        macro_rules! pin {
+            ($pxi:ident: $pin:expr, Input) => {
+                $crate::traits::lesson_3::gpio::impl_input!($pxi: $pin);
+            };
+
+            ($pxi:ident: $pin:expr, IO) => {
+                $crate::traits::lesson_3::gpio::impl_input_output!($pxi: $pin);
+            };
+        }
+
+        #[allow(unused_imports)]
+        pub(crate) use impl_input;
+        #[allow(unused_imports)]
+        pub(crate) use impl_input_output;
+        #[allow(unused_imports)]
+        pub(crate) use pin;
+    }
+
+    pub fn run() -> Result<()> {
+        use self::core::*;
+        use gpio::*;
+        use peripheral::{Peripheral, PeripheralRef};
+
+        gpio::pin!(Gpio0:0, IO);
+        gpio::pin!(Gpio34:34, Input);
+
+        unsafe {
+            let pin = Gpio0::new();
+            gpio::PinDriver::output(pin);
+
+            let pin2 = Gpio34::new();
+            gpio::PinDriver::input(pin2);
+        }
+
+        Ok(())
+    }
 }
 
 fn test_mut_t<T>(device: T, message: &str)
