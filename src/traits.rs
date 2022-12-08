@@ -337,7 +337,7 @@ mod lesson_3 {
         }
     }
 
-    mod gpio {
+    pub(crate) mod gpio {
         use super::core::impl_peripheral_trait;
         use super::peripheral::{Peripheral, PeripheralRef};
         use anyhow::Result;
@@ -475,8 +475,32 @@ mod lesson_3 {
             }
         }
 
+        pub trait InputMode {
+            const RTC: bool;
+        }
+        pub trait OutputMode {
+            const RTC: bool;
+        }
+
         pub struct Output;
         pub struct Input;
+        pub struct InputOutput;
+
+        impl InputMode for Input {
+            const RTC: bool = false;
+        }
+
+        impl InputMode for InputOutput {
+            const RTC: bool = false;
+        }
+
+        impl OutputMode for Output {
+            const RTC: bool = false;
+        }
+
+        impl OutputMode for InputOutput {
+            const RTC: bool = false;
+        }
 
         /// A driver for a GPIO pin.
         ///
@@ -502,6 +526,20 @@ mod lesson_3 {
                     _mode: PhantomData,
                 }
                 .into_input()
+            }
+        }
+
+        impl<'d, T: InputPin + OutputPin> PinDriver<'d, T, InputOutput> {
+            /// Creates the driver for a pin in input-output state.
+            #[inline]
+            pub fn input_output(pin: impl Peripheral<P = T> + 'd) -> Result<Self> {
+                crate::into_ref!(pin);
+
+                Self {
+                    pin,
+                    _mode: PhantomData,
+                }
+                .into_input_output()
             }
         }
 
@@ -534,6 +572,15 @@ mod lesson_3 {
                 self.into_mode("input")
             }
 
+            /// Put the pin into input + output mode.
+            #[inline]
+            pub fn into_input_output(self) -> Result<PinDriver<'d, T, InputOutput>>
+            where
+                T: InputPin + OutputPin,
+            {
+                self.into_mode("input_output")
+            }
+
             /// Put the pin into output mode.
             #[inline]
             pub fn into_output(self) -> Result<PinDriver<'d, T, Output>>
@@ -560,6 +607,16 @@ mod lesson_3 {
                     pin,
                     _mode: PhantomData,
                 })
+            }
+
+            /// Toggle pin output
+            #[inline]
+            pub fn toggle(&mut self) -> Result<()>
+            where
+                MODE: OutputMode,
+            {
+                // Todo
+                Ok(())
             }
         }
 
@@ -633,16 +690,15 @@ mod lesson_3 {
         gpio::pin!(Gpio34:34, Input);
 
         unsafe {
-            let pin = Gpio0::new();
-            gpio::PinDriver::output(pin)?;
+            let gpio0 = Gpio0::new();
+            let mut io_pin = gpio0.downgrade();
 
-            let mut pin2 = Gpio34::new();
-            let pin2_ref = pin2.into_ref();
+            {
+                let mut pin_driver = PinDriver::input_output(&mut io_pin)?;
 
-            let driver = gpio::PinDriver::input(pin2_ref)?;
-            driver.into_input()?;
-
-            // let pin2_d = pin2_ref.deref();
+                pin_driver.toggle()?;
+            }
+            // NOTE: by using a block here, the `pin_driver` is implicitly dropped when execution reaches the end of the block.  This allowes for the drowngraded pin to be used without clashing with the borrow-checker.
         }
 
         Ok(())
