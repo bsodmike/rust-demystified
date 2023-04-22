@@ -29,6 +29,9 @@ pub enum Commands {
 
     /// Conversion
     Conversion,
+
+    /// Closures
+    Closures,
 }
 
 pub fn runner<T>(mut mk: impl FnMut() -> Result<T>) -> Result<T> {

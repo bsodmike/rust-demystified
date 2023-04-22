@@ -1,5 +1,6 @@
 pub mod builder;
 pub mod cli;
+pub mod closures;
 pub mod conversion;
 pub mod dispatch;
 pub mod oop_pattern;
