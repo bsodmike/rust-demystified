@@ -4,6 +4,8 @@ use log::info;
 #[tokio::main]
 pub async fn runner() -> Result<()> {
     lesson_1::run().await?;
+    lesson_2::run().await?;
+    lesson_3::run().await?;
 
     Ok(())
 }
@@ -86,6 +88,67 @@ mod lesson_1 {
         let results = MyActor::run_in_parallel::<String, Vec<u32>, u32>(task, items, &c).await;
 
         log::info!("run(): done.");
+
+        Ok(())
+    }
+}
+
+mod lesson_2 {
+    use super::*;
+    use std::{fmt::Debug, fs::File, io::Write};
+    trait Writeable: Write + Debug {}
+    impl Writeable for File {}
+
+    fn foo(f: &mut (impl FnMut(i32) -> i32 + ?Sized)) {
+        dbg!(f(5));
+    }
+
+    fn test(v: i32) -> i32 {
+        dbg!(v)
+    }
+
+    fn process_file(f: &mut (dyn Writeable)) {
+        dbg!(f);
+    }
+
+    pub async fn run() -> Result<()> {
+        foo(&mut test); // static dispatch
+
+        let dyn_func: &mut dyn FnMut(i32) -> i32 = &mut test;
+        foo(dyn_func); // dynamic dispatch
+
+        // example with Write trait object
+        let dyn_f: &mut dyn Writeable = &mut File::create("/tmp/test.log").unwrap();
+        process_file(dyn_f);
+
+        log::info!("run(): done.");
+
+        Ok(())
+    }
+}
+
+mod lesson_3 {
+    use super::*;
+
+    pub async fn run() -> Result<()> {
+        fn closures<F1, F2, F3>(
+            mut f1: F1,
+            mut f2: F2,
+            mut f3: F3,
+            mut f4: impl FnMut(usize) -> usize,
+        ) -> i32
+        where
+            F1: FnMut() -> f32,
+            F2: FnMut(i32) -> f32,
+            F3: FnMut(i32, i32) -> f32,
+        {
+            // (f1() + f2(10) + f3(20, 30)) as i32
+            f4(10) as i32
+        }
+
+        let x = closures(|| 0.1, |x| (2 * x) as f32, |x, y| (x + y) as f32, |k| k);
+
+        log::info!("run(): x: {}", x);
 
         Ok(())
     }
