@@ -6,6 +6,7 @@ pub async fn runner() -> Result<()> {
     lesson_1::run().await?;
     lesson_2::run().await?;
     lesson_3::run().await?;
+    lesson_4::run()?;
 
     Ok(())
 }
@@ -149,6 +150,59 @@ mod lesson_3 {
         let x = closures(|| 0.1, |x| (2 * x) as f32, |x, y| (x + y) as f32, |k| k);
 
         log::info!("run(): x: {}", x);
+
+        Ok(())
+    }
+}
+
+mod lesson_4 {
+    use super::*;
+
+    /*
+       Least                   Most
+       restrictive:            restrictive
+       FnOnce() --> FnMut() --> Fn()
+       T            &mut T      &T
+    */
+
+    fn exec_once<'a, F: FnOnce(&'a str)>(mut f: F) {
+        f("hola")
+    }
+
+    // https://practice.rs/functional-programing/closure.html#fn-fnmut-fnonce
+    pub fn run() -> Result<()> {
+        // Closure over FnOnce
+        let mut s = String::new();
+        let c = |str| {
+            s; // closure is `FnOnce` because it moves the variable `s` out of its environment
+            ()
+        };
+        exec_once(c);
+        // exec_once(&c); // not allowed
+
+        // Closure over FnMut
+        let mut s = String::new();
+        let mut c = |str| {
+            s.push_str(str);
+            // closure is `FnMut` because it mutates the variable `s` here
+            // this closure implements `FnMut`, not `Fn`
+        };
+        exec_once(&mut c);
+        exec_once(c);
+        // exec_once(&c); // not allowed
+
+        // Closure over Fn
+        let mut s = String::new();
+        let mut c = |str| {
+            let _ = &s;
+            ()
+        };
+        exec_once(c);
+        exec_once(&c);
+        exec_once(&mut c);
+
+        // exec_mut(&mut update_string2);
+        // assert_eq!(s, "hola".to_string());
 
         Ok(())
     }
