@@ -765,7 +765,7 @@ mod lesson_4 {
         T: Generic,
     {
         fn generic_fn<Q: Querializer>(&self, querializer: Q) {
-            println!("generic_fn() on Box<T> via the Generic Trait");
+            println!("impl<'a, T: ?Sized> Generic for Box<T>: calling generic_fn()");
 
             (**self).generic_fn(querializer)
         }
@@ -791,6 +791,7 @@ mod lesson_4 {
         //   - Box<dyn ErasedGeneric + Sync>
         //   - Box<dyn ErasedGeneric + Send + Sync>
         fn generic_fn<Q: Querializer>(&self, querializer: Q) {
+            println!("impl Generic for dyn ErasedGeneric: call self.erased_fn()");
             self.erased_fn(&querializer)
         }
     }
@@ -800,6 +801,7 @@ mod lesson_4 {
         T: Generic,
     {
         fn erased_fn(&self, querializer: &dyn Querializer) {
+            println!("erased_fn() caling self.generic_fn");
             self.generic_fn(querializer)
         }
     }
@@ -836,6 +838,7 @@ mod lesson_4 {
         // object and we are invoking a generic method on it.
         trait_object.generic_fn(T);
 
+        println!("");
         let trait_object: Box<dyn ErasedGeneric> = Box::new(&S { size: 0 });
         trait_object.generic_fn(T);
     }
