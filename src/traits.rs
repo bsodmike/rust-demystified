@@ -99,6 +99,7 @@ pub fn runner() -> Result<()> {
     lesson_1_add_trait_bound_to_parameter();
     lesson_2();
     lesson_3::run()?;
+    lesson_4::run();
 
     Ok(())
 }
@@ -742,4 +743,100 @@ fn lesson_1_add_trait_bound_to_parameter() {
     // 4  | pub fn x(b: Box<impl Display + 'static>) -> Box<dyn Display> {
     //    |                      ^^^^^^^ required by this bound in `x`
     let resp = x(Box::new(device));
+}
+
+// https://github.com/dtolnay/erased-serde/blob/master/explanation/main.rs
+mod lesson_4 {
+    /////////////////////////////////////////////////////////////////////
+    // Suppose these are the real traits from Serde.
+
+    trait Querializer {}
+
+    trait Generic {
+        // Not object safe because of this generic method.
+        fn generic_fn<Q: Querializer>(&self, querializer: Q);
+    }
+
+    // Note: extra constraint `where T: Querializer` does not seem to be needed.
+    impl<'a, T: ?Sized> Querializer for &'a T {}
+
+    impl<'a, T: ?Sized> Generic for Box<T>
+    where
+        T: Generic,
+    {
+        fn generic_fn<Q: Querializer>(&self, querializer: Q) {
+            println!("generic_fn() on Box<T> via the Generic Trait");
+
+            (**self).generic_fn(querializer)
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // This is an object-safe equivalent that interoperates seamlessly.
+
+    trait ErasedGeneric {
+        fn erased_fn(&self, querializer: &dyn Querializer);
+    }
+
+    impl Generic for dyn ErasedGeneric {
+        // Depending on the trait method signatures and the upstream
+        // impls, could also implement for:
+        //
+        //   - &'a dyn ErasedGeneric
+        //   - &'a (dyn ErasedGeneric + Send)
+        //   - &'a (dyn ErasedGeneric + Sync)
+        //   - &'a (dyn ErasedGeneric + Send + Sync)
+        //   - Box<dyn ErasedGeneric>
+        //   - Box<dyn ErasedGeneric + Send>
+        //   - Box<dyn ErasedGeneric + Sync>
+        //   - Box<dyn ErasedGeneric + Send + Sync>
+        fn generic_fn<Q: Querializer>(&self, querializer: Q) {
+            self.erased_fn(&querializer)
+        }
+    }
+
+    impl<T> ErasedGeneric for T
+    where
+        T: Generic,
+    {
+        fn erased_fn(&self, querializer: &dyn Querializer) {
+            self.generic_fn(querializer)
+        }
+    }
+
+    pub fn run() {
+        struct T;
+        impl Querializer for T {}
+
+        #[derive(Debug)]
+        struct S {
+            size: usize,
+        };
+        impl Generic for S {
+            fn generic_fn<Q: Querializer>(&self, _querializer: Q) {
+                println!("querying the real S");
+            }
+        }
+
+        impl Generic for &S {
+            fn generic_fn<Q: Querializer>(&self, _querializer: Q) {
+                println!("querying the real &S");
+                let s = *self;
+
+                dbg!("{:#?}", s);
+            }
+        }
+
+        // Construct a trait object.
+        let trait_object: Box<dyn ErasedGeneric> = Box::new(S { size: 0 });
+
+        // Seamlessly invoke the generic method on the trait object.
+        //
+        // THIS LINE LOOKS LIKE MAGIC. We have a value of type trait
+        // object and we are invoking a generic method on it.
+        trait_object.generic_fn(T);
+
+        let trait_object: Box<dyn ErasedGeneric> = Box::new(&S { size: 0 });
+        trait_object.generic_fn(T);
+    }
 }
