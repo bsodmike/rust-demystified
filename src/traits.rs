@@ -99,7 +99,8 @@ pub fn runner() -> Result<()> {
     lesson_1_add_trait_bound_to_parameter();
     lesson_2();
     lesson_3::run()?;
-    lesson_4::run();
+    // lesson_4::run();
+    lesson_5::run();
 
     Ok(())
 }
@@ -841,5 +842,134 @@ mod lesson_4 {
         println!("");
         let trait_object: Box<dyn ErasedGeneric> = Box::new(&S { size: 0 });
         trait_object.generic_fn(T);
+    }
+}
+
+mod lesson_5 {
+    use std::any::Any;
+    /////////////////////////////////////////////////////////////////////
+    // Suppose these are the real traits from Serde.
+
+    trait Task {}
+
+    trait Generic {
+        // Not object safe because of this generic method.
+        fn generic_fn<Q: Task>(&self, task: Q);
+    }
+
+    // Note: extra constraint `where T: Task` does not seem to be needed.
+    impl<'a, T: ?Sized> Task for &'a T {}
+
+    impl<'a, T: ?Sized> Generic for Box<T>
+    where
+        T: Generic,
+    {
+        fn generic_fn<Q: Task>(&self, task: Q) {
+            println!("impl<'a, T: ?Sized> Generic for Box<T>: calling generic_fn()");
+
+            (**self).generic_fn(task)
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // This is an object-safe equivalent that interoperates seamlessly.
+
+    trait AsAny {
+        fn as_any(&self) -> &dyn Any;
+    }
+
+    trait ErasedGeneric {
+        fn erased_fn(&self, task: &dyn Task);
+
+        fn as_any(&self) -> &dyn Any;
+    }
+
+    impl Generic for dyn ErasedGeneric {
+        // Depending on the trait method signatures and the upstream
+        // impls, could also implement for:
+        //
+        //   - &'a dyn ErasedGeneric
+        //   - &'a (dyn ErasedGeneric + Send)
+        //   - &'a (dyn ErasedGeneric + Sync)
+        //   - &'a (dyn ErasedGeneric + Send + Sync)
+        //   - Box<dyn ErasedGeneric>
+        //   - Box<dyn ErasedGeneric + Send>
+        //   - Box<dyn ErasedGeneric + Sync>
+        //   - Box<dyn ErasedGeneric + Send + Sync>
+        fn generic_fn<Q: Task>(&self, task: Q) {
+            println!("impl Generic for dyn ErasedGeneric: call self.erased_fn()");
+            self.erased_fn(&task)
+        }
+    }
+
+    impl<T> ErasedGeneric for T
+    where
+        T: Generic + 'static,
+    {
+        fn erased_fn(&self, task: &dyn Task) {
+            println!("erased_fn() caling self.generic_fn");
+            self.generic_fn(task)
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+    }
+
+    pub fn run() {
+        #[derive(Debug)]
+        struct T;
+        impl Task for T {}
+
+        #[derive(Debug)]
+        struct S {
+            size: usize,
+        };
+        impl Generic for S {
+            fn generic_fn<Q: Task>(&self, _task: Q) {
+                println!("querying the real S");
+
+                let s = self;
+
+                dbg!("{:#?}", s);
+            }
+        }
+
+        #[derive(Debug)]
+        struct M {
+            size: usize,
+        };
+        impl Generic for M {
+            fn generic_fn<Q: Task>(&self, _task: Q) {
+                println!("querying the real M");
+
+                let s = self;
+
+                dbg!("{:#?}", s);
+            }
+        }
+
+        struct Tasks {
+            tasks: Vec<Box<dyn ErasedGeneric>>,
+        }
+
+        // Construct a trait object.
+        let mut tasks: Vec<Box<dyn ErasedGeneric>> = vec![];
+        let trait_object1: Box<dyn ErasedGeneric> = Box::new(S { size: 0 });
+        let trait_object2: Box<dyn ErasedGeneric> = Box::new(M { size: 0 });
+        tasks.push(trait_object1);
+        tasks.push(trait_object2);
+
+        for (index, task) in tasks.iter().enumerate() {
+            // task.generic_fn(T);
+
+            if let Some(inner) = task.as_ref().as_any().downcast_ref::<S>() {
+                println!("Downcast index {index} of type S: {:#?}", inner);
+            }
+
+            if let Some(inner) = task.as_ref().as_any().downcast_ref::<M>() {
+                println!("Downcast index {index} of type M: {:#?}", inner);
+            }
+        }
     }
 }
