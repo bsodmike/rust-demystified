@@ -17,6 +17,16 @@ clap = { version = "3", features = ["derive"] }
 dotenv = "0.15.0"
 env_logger = "0.9.0"
 log = "0.4.16"
+http-body = "0.4.5"
+
+axum = { version = "0.6.18", features = ["headers", "tower-log"] }
+axum-extra = "0.1.2"
+
+# Axum builds on the types in Tower
+tower = { version = "0.4.13", features = ["limit", "load-shed", "filter", "util"] }
+tower-http = { version = "0.4.0", features = ["trace", "cors", "catch-panic"] }
+tower-layer = "0.3.1"
+tower-service = "0.3.1"
 
 [dev-dependencies]
 test-log = "0.2.10"

@@ -99,8 +99,10 @@ pub fn runner() -> Result<()> {
     lesson_1_add_trait_bound_to_parameter();
     lesson_2();
     lesson_3::run()?;
-    // lesson_4::run();
+    // lesson_4::run();```````````````````````````````````
     lesson_5::run();
+
+    lesson6::run();
 
     Ok(())
 }
@@ -814,7 +816,7 @@ mod lesson_4 {
         #[derive(Debug)]
         struct S {
             size: usize,
-        };
+        }
         impl Generic for S {
             fn generic_fn<Q: Querializer>(&self, _querializer: Q) {
                 println!("querying the real S");
@@ -924,7 +926,7 @@ mod lesson_5 {
         #[derive(Debug)]
         struct S {
             size: usize,
-        };
+        }
         impl Generic for S {
             fn generic_fn<Q: Task>(&self, _task: Q) {
                 println!("querying the real S");
@@ -938,7 +940,7 @@ mod lesson_5 {
         #[derive(Debug)]
         struct M {
             size: usize,
-        };
+        }
         impl Generic for M {
             fn generic_fn<Q: Task>(&self, _task: Q) {
                 println!("querying the real M");
@@ -971,5 +973,108 @@ mod lesson_5 {
                 println!("Downcast index {index} of type M: {:#?}", inner);
             }
         }
+    }
+}
+
+mod lesson6 {
+    use axum::{
+        body::Body,
+        extract::{FromRequest, FromRequestParts, State},
+        handler::{HandlerService as OtherHandlerService, Layered as OtherLayered},
+        response::IntoResponse,
+        routing::get,
+        Router,
+    };
+    use futures::Future;
+    use hyper::body::Buf;
+    use hyper::http::{Request, Response};
+    use std::{convert::Infallible, fmt, marker::PhantomData, pin::Pin};
+    use tower_layer::Layer;
+    use tower_service::Service;
+
+    pub struct Layered<L, H, T, S, B, B2> {
+        pub layer: L,
+        pub handler: H,
+        pub _marker: PhantomData<fn() -> (T, S, B, B2)>,
+    }
+
+    pub struct HandlerService<H, T, S, B> {
+        pub handler: H,
+        pub state: S,
+        pub _marker: PhantomData<fn() -> (T, B)>,
+    }
+
+    pub trait Handler<T, S>: Clone + Send + Sized + 'static {
+        /// The type of future calling this handler returns.
+        type Future: Future<Output = Response<Self::RespType>> + Send + 'static;
+
+        type RespType;
+
+        /// Call the handler with the given request.
+        fn call(self, req: Request<Self::RespType>, state: S) -> Self::Future;
+
+        /// Apply a [`tower::Layer`] to the handler.
+        fn layer<L, B, B2>(self, layer: L) -> Layered<L, Self, T, S, B, B2>
+        where
+            L: Layer<HandlerService<Self, T, S, B>> + Clone,
+            L::Service: Service<Request<Self::RespType>>,
+        {
+            Layered {
+                layer,
+                handler: self,
+                _marker: PhantomData,
+            }
+        }
+
+        /// Convert the handler into a [`Service`] by providing the state
+        fn with_state<B>(
+            self,
+            state: S,
+            _: PhantomData<fn() -> (T, B)>,
+        ) -> HandlerService<Self, T, S, B> {
+            // NOTE calling `new` is private
+            // HandlerService::new(self, state)
+            HandlerService {
+                handler: self,
+                state,
+                _marker: PhantomData,
+            }
+        }
+    }
+
+    impl<F, Fut, Res, S> Handler<((),), S> for F
+    where
+        F: FnOnce() -> Fut + Clone + Send + 'static,
+        Fut: Future<Output = Res> + Send,
+        Res: IntoResponse,
+    {
+        type Future = Pin<Box<dyn Future<Output = Response<Self::RespType>> + Send>>;
+        type RespType = ();
+
+        fn call(self, _req: Request<Self::RespType>, _state: S) -> Self::Future {
+            Box::pin(async move {
+                let real_resp = self().await.into_response();
+
+                let response = Response::builder()
+                    .status(200)
+                    .header("X-Custom-Foo", "Bar")
+                    .body(())
+                    .unwrap();
+
+                response
+            })
+        }
+    }
+
+    pub fn run() {
+        // NOTE this breaks as we clash with existing expansion in axum.
+        // let app = Router::new().route("/", get(root));
+        //
+        // 403  | top_level_handler_fn!(get, GET);
+        //      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `get`
+    }
+
+    pub fn root() {
+        ()
     }
 }

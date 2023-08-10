@@ -75,7 +75,7 @@ mod lesson_1 {
             res
         }
 
-        async fn do_task(task_name: String, mut el: u32) {
+        async fn do_task(task_name: String, el: u32) {
             log::info!("do_task(): {} / {}", task_name, el);
         }
     }
