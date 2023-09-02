@@ -100,9 +100,11 @@ pub fn runner() -> Result<()> {
     lesson_2();
     lesson_3::run()?;
     // lesson_4::run();```````````````````````````````````
-    lesson_5::run();
+    // lesson_5::run();
 
-    lesson6::run();
+    // lesson6::run();
+    lesson7::run();
+    lesson8::run();
 
     Ok(())
 }
@@ -1076,5 +1078,102 @@ mod lesson6 {
 
     pub fn root() {
         ()
+    }
+}
+
+mod lesson7 {
+    use super::*;
+
+    // Each caller needs to care about the generic `F` and propagate this type up.
+    // Also anyone using `Wrapper` needs to generic and name the type of `F`.
+    // pub struct Wrapper<F: Fn()> {
+    //     f: F,
+    // }
+
+    // This leads to a cleaner interface
+    pub struct Wrapper {
+        f: Box<dyn Fn()>,
+    }
+
+    // Either the following
+    //
+    // trait X {
+    //     fn foo(&self, f: impl Fn());
+    // }
+    //
+    // or
+    //
+    // trait X {
+    //     fn foo<F: Fn()>(&self, f: F);
+    // }
+    //
+    // fn quox(x: &dyn X) {}
+    //
+    // will not work as the trait needs to be object safe.
+
+    trait X {
+        fn foo(&self, f: ClosureType) -> u8;
+    }
+    // Now, there is only a single 'foo' in the V-table.
+
+    fn quox(x: &dyn X) {}
+
+    pub struct Entity {}
+
+    impl X for Entity {
+        fn foo(&self, f: ClosureType) -> u8 {
+            let x = (*f)();
+
+            x
+        }
+    }
+
+    pub fn do_closure() -> u8 {
+        10
+    }
+
+    pub type ClosureType<'a> = &'a dyn Fn() -> u8;
+
+    pub fn run() {
+        let e = Entity {};
+
+        let x: u8 = 10;
+        let c = move || x * x;
+        let resp = e.foo(&c);
+        let resp2 = e.foo(&do_closure);
+
+        info!("lesson 7: resp: {}", resp);
+        info!("lesson 7: resp2: {}", resp2);
+    }
+}
+
+/// Nothing to do with Traits, needs to be stashed somewhere else.
+mod lesson8 {
+    use std::sync::Arc;
+
+    #[derive(Debug, Clone)]
+    struct Entity {
+        counter: Arc<Box<u8>>,
+    }
+
+    impl Entity {
+        pub fn new() -> Self {
+            Self {
+                counter: Arc::new(Box::new(0)),
+            }
+        }
+    }
+
+    pub fn run() {
+        let new_box = Entity::new();
+
+        let static_ref: &'static mut u8 = Box::leak(Box::new(**new_box.counter));
+        assert_eq!(static_ref, &0);
+
+        *static_ref = 2;
+        assert_eq!(static_ref, &2);
+
+        let counter = **new_box.counter;
+        assert_eq!(counter, 0);
     }
 }
