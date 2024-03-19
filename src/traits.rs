@@ -105,7 +105,7 @@ pub fn runner() -> Result<()> {
     // lesson6::run();
     lesson7::run();
     let _ = lesson8::run();
-    lesson9::run();
+    let _ = lesson9::run();
     lesson10::run();
 
     Ok(())

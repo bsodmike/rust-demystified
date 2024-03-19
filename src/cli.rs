@@ -32,6 +32,9 @@ pub enum Commands {
 
     /// Closures
     Closures,
+
+    /// Challenge1
+    Challenge1,
 }
 
 pub fn runner<T>(mut mk: impl FnMut() -> Result<T>) -> Result<T> {

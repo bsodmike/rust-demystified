@@ -3,7 +3,7 @@
 // Disabled for use of UnsafeCell
 //#![forbid(unsafe_code)]
 #![allow(unused_imports)]
-#![deny(unreachable_pub, private_in_public, unstable_features)]
+#![deny(unreachable_pub, unstable_features)]
 #![warn(rust_2018_idioms, future_incompatible, nonstandard_style)]
 
 use anyhow::{Error, Result};
@@ -11,6 +11,7 @@ use clap::Parser;
 use log::{debug, info};
 use std::io::Read;
 use std::sync::Arc;
+use tutorials::challenge1;
 use tutorials::cli::{runner, Args, Commands};
 use tutorials::{
     builder::TaskManagerBuilder, closures, dispatch::*, oop_pattern::*, smart_pointers::*, traits,
@@ -143,6 +144,13 @@ fn main() -> Result<()> {
             info!("Tutorial: Closures\n");
 
             closures::runner()?;
+
+            Ok(())
+        })?,
+        Some(Commands::Challenge1) => runner(|| {
+            info!("Tutorial: Challenge1\n");
+
+            challenge1::runner()?;
 
             Ok(())
         })?,
