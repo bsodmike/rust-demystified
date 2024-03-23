@@ -1,7 +1,13 @@
-pub(crate) mod builder;
-pub(crate) mod cli;
-pub(crate) mod dispatch;
-pub(crate) mod oop_pattern;
+pub mod builder;
+pub mod cli;
+pub mod closures;
+pub mod conversion;
+pub mod dispatch;
+pub mod oop_pattern;
+pub mod smart_pointers;
+pub mod traits;
 //mod generics_1;
 //mod iterators_1;
 //mod trait_objects_1;
+pub mod challenge1;
+pub mod partial_eq;
