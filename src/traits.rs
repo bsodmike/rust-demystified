@@ -1486,7 +1486,7 @@ pub mod lesson8 {
         }
     }
 
-    mod client {
+    pub mod client {
         use crate::traits::lesson8::error::{Error, Result};
         use bufstream::BufStream;
         use std::{
@@ -1555,7 +1555,7 @@ pub mod lesson8 {
             /// you will need to listen for the IMAP protocol server greeting before authenticating:
             ///
             /// ```rust,no_run
-            /// # use imap::Client;
+            /// # use tutorials::traits::lesson8::client::Client;
             /// # use std::io;
             /// # use std::net::TcpStream;
             /// # {} #[cfg(feature = "native-tls")]
@@ -1792,7 +1792,7 @@ pub mod lesson8 {
         /// Make a [`Client`] using the configuration.
         ///
         /// ```no_run
-        /// # use imap::ClientBuilder;
+        /// # use tutorials::traits::lesson8::ClientBuilder;
         /// # {} #[cfg(feature = "rustls-tls")]
         /// # fn main() -> Result<(), imap::Error> {
         /// let client = ClientBuilder::new("imap.example.com", 143)
@@ -1831,7 +1831,7 @@ pub mod lesson8 {
         /// have initiated the `STARTTLS` handshake.
         ///
         /// ```no_run
-        /// # use imap::ClientBuilder;
+        /// # use tutorials::traits::lesson8::ClientBuilder;
         /// # use rustls_connector::RustlsConnector;
         /// # {} #[cfg(feature = "rustls-tls")]
         /// # fn main() -> Result<(), imap::Error> {
