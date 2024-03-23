@@ -35,6 +35,9 @@ pub enum Commands {
 
     /// Challenge1
     Challenge1,
+
+    /// PartialEq example
+    PartialEq1,
 }
 
 pub fn runner<T>(mut mk: impl FnMut() -> Result<T>) -> Result<T> {

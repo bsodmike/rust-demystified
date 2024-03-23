@@ -11,11 +11,11 @@ use clap::Parser;
 use log::{debug, info};
 use std::io::Read;
 use std::sync::Arc;
-use tutorials::challenge1;
 use tutorials::cli::{runner, Args, Commands};
 use tutorials::{
     builder::TaskManagerBuilder, closures, dispatch::*, oop_pattern::*, smart_pointers::*, traits,
 };
+use tutorials::{challenge1, partial_eq};
 
 fn main() -> Result<()> {
     env_logger::init();
@@ -154,6 +154,14 @@ fn main() -> Result<()> {
 
             Ok(())
         })?,
+        Some(Commands::PartialEq1) => runner(|| {
+            info!("Tutorial: PartialEq1\n");
+
+            partial_eq::runner()?;
+
+            Ok(())
+        })?,
+
         _ => info!("Command not found"),
     };
 
