@@ -22,6 +22,12 @@ fn main() -> Result<()> {
 
     let cli = Args::parse();
 
+    // FIXME - what was this about now?
+    // let f = vec![];
+    // let s = || {
+    //     //
+    // };
+
     match &cli.command {
         Some(Commands::Dispatch) => {
             runner(|| {
