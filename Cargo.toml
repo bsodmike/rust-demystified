@@ -9,6 +9,10 @@ publish = false
 name = "tokio-panic-handling"
 path = "src/bin/tokio-panic-handling.rs"
 
+[[bin]]
+name = "string-search"
+path = "src/bin/string-search.rs"
+
 [dependencies]
 anyhow = "1.0.66"
 futures = "0.3.19"
@@ -34,6 +38,7 @@ hex = "^0.4"
 aes-gcm-siv = "^0.11"
 aes = "^0.8"
 heapless = "^0.8"
+critical-section = { version = "1.1", features = ["std"]}
 
 axum = { version = "0.6.18", features = ["headers", "tower-log"] }
 axum-extra = "0.1.2"

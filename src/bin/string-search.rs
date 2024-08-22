@@ -1,0 +1,178 @@
+//! Challenge:
+//!
+//! - Assume two users are using a site like eBay, but the concept is that user Bob can post an item for sale via a text input field and offer a sell price.
+//! - The bidding action is performed purely in memory, so ignore I/O and other complexities.
+//! - Think in terms of C++ and pointers.  This is a quiz on simple data structures.
+//! - Optimise for Big O performance.
+//!
+//! Design notes
+//!
+//! - User input is assumed to be all lower case, alphanumerals only, with single spaces.  The assumption is that this binary operates on clean data.  Validating and sanitising input is a further refinement.
+//! - TBD
+//!
+//! Optimisations:
+//!
+//! Create small and big benchmarks:
+//!
+//! - Use https://github.com/bheisler/criterion.rs
+//! - Use https://github.com/nvzqz/divan
+//!
+#![allow(unused_imports, dead_code, unused_variables)]
+
+use anyhow::anyhow;
+use anyhow::Error;
+use std::cell::RefCell;
+use std::hash::Hash;
+use std::{
+    collections::HashMap,
+    io::{BufRead, Write},
+    ops::Deref,
+    pin::Pin,
+    sync::LazyLock,
+};
+use tokio::sync::Mutex;
+
+pub static ENTRY_MAP: LazyLock<Mutex<Option<HashMap<String, f64>>>> =
+    LazyLock::new(|| Mutex::new(Some(HashMap::new())));
+
+pub struct Entries(HashMap<String, f64>);
+
+impl Entries {
+    pub async fn add(text: String, amount: f64) {
+        let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+        if let Some(entries) = index_lock {
+            let mut existing_data = entries.clone();
+            existing_data.insert(text, amount);
+
+            *entries = existing_data;
+        }
+    }
+
+    pub async fn add_many(items: HashMap<&str, f64>) {
+        let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+        if let Some(entries) = index_lock {
+            let new: HashMap<String, f64> = items
+                .into_iter()
+                .map(|el| (el.0.to_string(), el.1))
+                .collect();
+            *entries = new;
+        }
+    }
+
+    pub async fn search(input: &str, amount: f64) -> Result<(String, f64, f64), Error> {
+        let text = input.to_string();
+
+        let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+        if let Some(entries) = index_lock {
+            let needle = text;
+            let haystack: Vec<String> = entries.into_iter().map(|el| el.0.to_string()).collect();
+
+            if haystack.contains(&needle) {
+                if let Some(cost) = entries.get(&needle) {
+                    if amount >= *cost {
+                        Ok((needle, amount, *cost))
+                    } else {
+                        return Err(anyhow!(
+                            "Item {} costs more than your offer of ${}",
+                            &needle,
+                            &amount
+                        ));
+                    }
+                } else {
+                    unreachable!()
+                }
+            } else {
+                return Err(anyhow!("Item {} is not available!", &needle));
+            }
+        } else {
+            // This would be classed as an internal error, so ideally I would mark this as `unreachable!()`.
+            return Err(anyhow!("Internal error"));
+        }
+    }
+}
+
+#[tokio::main]
+pub async fn main() -> Result<(), Error> {
+    Ok(())
+}
+
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn match_existing_available_item() {
+        let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
+        Entries::add_many(items).await;
+
+        {
+            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            if let Some(entries) = index_lock {
+                dbg!(&entries);
+                assert!(entries.len() > 0);
+            };
+        }
+
+        // Success, the buyer gets an instant match!
+        let (item, bid, ask) = Entries::search("banana", 20.00).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn panic_expect_error_for_low_bid() {
+        let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
+        Entries::add_many(items).await;
+
+        {
+            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            if let Some(entries) = index_lock {
+                dbg!(&entries);
+                assert!(entries.len() > 0);
+            };
+        }
+
+        if let Err(err) = Entries::search("banana", 8.23).await {
+            assert_eq!(
+                err.to_string(),
+                String::from("Item banana costs more than your offer of $8.23")
+            )
+        }
+    }
+
+    #[should_panic]
+    #[tokio::test]
+    async fn handle_mismatching_category() {
+        let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
+        Entries::add_many(items).await;
+
+        {
+            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            if let Some(entries) = index_lock {
+                dbg!(&entries);
+                assert!(entries.len() > 0);
+            };
+        }
+
+        Entries::search("fruit", 20.00).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn panic_mismatching_category_partial_text() {
+        let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
+        Entries::add_many(items).await;
+
+        {
+            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            if let Some(entries) = index_lock {
+                dbg!(&entries);
+                assert!(entries.len() > 0);
+            };
+        }
+
+        if let Err(err) = Entries::search("red appl", 8.23).await {
+            assert_eq!(
+                err.to_string(),
+                String::from("Item red appl is not available!")
+            )
+        }
+    }
+}
