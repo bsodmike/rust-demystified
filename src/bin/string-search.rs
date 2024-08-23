@@ -34,30 +34,30 @@ use std::{
 };
 use tokio::sync::Mutex;
 
-pub static ENTRY_MAP: LazyLock<Mutex<Option<HashMap<String, f64>>>> =
-    LazyLock::new(|| Mutex::new(Some(HashMap::new())));
+pub static ENTRY_MAP: LazyLock<Mutex<Option<Entries>>> =
+    LazyLock::new(|| Mutex::new(Some(Entries(HashMap::new()))));
 
 pub struct Entries(HashMap<String, f64>);
 
 impl Entries {
     pub async fn add(text: String, amount: f64) {
-        let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+        let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
         if let Some(entries) = index_lock {
-            let mut existing_data = entries.clone();
+            let mut existing_data = entries.0.clone();
             existing_data.insert(text, amount);
 
-            *entries = existing_data;
+            entries.0 = existing_data;
         }
     }
 
     pub async fn add_many(items: HashMap<&str, f64>) {
-        let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+        let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
         if let Some(entries) = index_lock {
             let new: HashMap<String, f64> = items
                 .into_iter()
                 .map(|el| (el.0.to_string(), el.1))
                 .collect();
-            *entries = new;
+            entries.0 = new;
         }
     }
 
@@ -68,10 +68,15 @@ impl Entries {
     ) -> Result<(String, f64, f64), Error> {
         let text = input.to_string();
 
-        let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+        let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
         if let Some(entries) = index_lock {
             let needle = text;
-            let haystack: Vec<String> = entries.into_iter().map(|el| el.0.to_string()).collect();
+            let haystack: Vec<String> = entries
+                .0
+                .clone()
+                .into_iter()
+                .map(|el| el.0.to_string())
+                .collect();
 
             if benchmark {
                 let hay_slice: Vec<String> = haystack;
@@ -81,7 +86,7 @@ impl Entries {
                     black_box(hay_slice),
                     black_box(needle.to_string()),
                 )) {
-                    if let Some(cost) = entries.get(&needle) {
+                    if let Some(cost) = entries.0.get(&needle) {
                         if amount >= *cost {
                             Ok((needle, amount, *cost))
                         } else {
@@ -99,7 +104,7 @@ impl Entries {
                 }
             } else {
                 if haystack.contains(&needle) {
-                    if let Some(cost) = entries.get(&needle) {
+                    if let Some(cost) = entries.0.get(&needle) {
                         if amount >= *cost {
                             Ok((needle, amount, *cost))
                         } else {
@@ -144,10 +149,10 @@ pub mod tests {
         Entries::add_many(items).await;
 
         {
-            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
             if let Some(entries) = index_lock {
-                dbg!(&entries);
-                assert!(entries.len() > 0);
+                dbg!(&entries.0);
+                assert!(entries.0.len() > 0);
             };
         }
 
@@ -161,10 +166,10 @@ pub mod tests {
         Entries::add_many(items).await;
 
         {
-            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
             if let Some(entries) = index_lock {
-                dbg!(&entries);
-                assert!(entries.len() > 0);
+                dbg!(&entries.0);
+                assert!(entries.0.len() > 0);
             };
         }
 
@@ -178,10 +183,10 @@ pub mod tests {
         Entries::add_many(items).await;
 
         {
-            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
             if let Some(entries) = index_lock {
-                dbg!(&entries);
-                assert!(entries.len() > 0);
+                dbg!(&entries.0);
+                assert!(entries.0.len() > 0);
             };
         }
 
@@ -200,10 +205,10 @@ pub mod tests {
         Entries::add_many(items).await;
 
         {
-            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
             if let Some(entries) = index_lock {
-                dbg!(&entries);
-                assert!(entries.len() > 0);
+                dbg!(&entries.0);
+                assert!(entries.0.len() > 0);
             };
         }
 
@@ -216,10 +221,10 @@ pub mod tests {
         Entries::add_many(items).await;
 
         {
-            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
             if let Some(entries) = index_lock {
-                dbg!(&entries);
-                assert!(entries.len() > 0);
+                dbg!(&entries.0);
+                assert!(entries.0.len() > 0);
             };
         }
 
