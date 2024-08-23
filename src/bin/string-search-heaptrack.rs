@@ -16,20 +16,17 @@ pub async fn main() -> Result<(), Error> {
         .collect();
 
     let hm_keys = &items.clone().into_keys().collect::<Vec<&str>>();
-    Entries::add_many(items).await;
+    Entries::add_many(items);
 
     {
-        let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
-        if let Some(entries) = index_lock {
+        if let Ok(entries) = &mut ENTRY_MAP.lock() {
             assert!(entries.0.len() > 0);
         };
     }
 
     // Success, the buyer gets an instant match!
     let _ = black_box(
-        Entries::search(hm_keys[0], 120.00, true)
-            .await
-            .expect("Unable to search through entries!"),
+        Entries::search(hm_keys[0], 120.00, true).expect("Unable to search through entries!"),
     );
     Ok(())
 }

@@ -2,18 +2,17 @@
 
 use anyhow::anyhow;
 use anyhow::Error;
+use std::sync::Mutex;
 use std::{collections::HashMap, sync::LazyLock};
-use tokio::sync::Mutex;
 
-pub static ENTRY_MAP: LazyLock<Mutex<Option<Entries>>> =
-    LazyLock::new(|| Mutex::new(Some(Entries(HashMap::new()))));
+pub static ENTRY_MAP: LazyLock<Mutex<Entries>> =
+    LazyLock::new(|| Mutex::new(Entries(HashMap::new())));
 
 pub struct Entries(pub HashMap<String, f64>);
 
 impl Entries {
-    pub async fn add(text: String, amount: f64) {
-        let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
-        if let Some(entries) = index_lock {
+    pub fn add(text: String, amount: f64) {
+        if let Ok(entries) = &mut ENTRY_MAP.lock() {
             let mut existing_data = entries.0.clone();
             existing_data.insert(text, amount);
 
@@ -21,9 +20,8 @@ impl Entries {
         }
     }
 
-    pub async fn add_many(items: HashMap<&str, f64>) {
-        let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
-        if let Some(entries) = index_lock {
+    pub fn add_many(items: HashMap<&str, f64>) {
+        if let Ok(entries) = &mut ENTRY_MAP.lock() {
             let new: HashMap<String, f64> = items
                 .into_iter()
                 .map(|el| (el.0.to_string(), el.1))
@@ -32,15 +30,10 @@ impl Entries {
         }
     }
 
-    pub async fn search(
-        input: &str,
-        amount: f64,
-        benchmark: bool,
-    ) -> Result<(String, f64, f64), Error> {
+    pub fn search(input: &str, amount: f64, _: bool) -> Result<(String, f64, f64), Error> {
         let text = input.to_string();
 
-        let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
-        if let Some(entries) = index_lock {
+        if let Ok(entries) = &mut ENTRY_MAP.lock() {
             // println!("Number of items to search: {}", entries.0.len());
 
             let needle = text;

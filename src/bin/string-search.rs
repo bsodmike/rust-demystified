@@ -41,8 +41,8 @@ pub mod tests {
     use std::collections::HashMap;
     use std::hint::black_box;
 
-    #[tokio::test]
-    async fn match_existing_available_item() {
+    #[test]
+    fn match_existing_available_item() {
         static PHRASE_COUNT: i32 = 10_000;
         let rng_phrases = phrases(PHRASE_COUNT);
         let items: HashMap<&str, f64> = rng_phrases
@@ -54,34 +54,32 @@ pub mod tests {
         //     HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
         // dbg!(&items);
         let hm_keys = &items.clone().into_keys().collect::<Vec<&str>>();
-        Entries::add_many(items).await;
+        Entries::add_many(items);
 
         {
-            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
-            if let Some(entries) = index_lock {
+            if let Ok(entries) = &mut ENTRY_MAP.lock() {
                 assert!(entries.0.len() > 0);
             };
         }
 
         // Success, the buyer gets an instant match!
 
-        let (item, bid, ask) = black_box(Entries::search(hm_keys[0], 120.00, true).await.unwrap());
+        let (item, bid, ask) = black_box(Entries::search(hm_keys[0], 120.00, true).unwrap());
     }
 
-    #[tokio::test]
-    async fn panic_expect_error_for_low_bid() {
+    #[test]
+    fn panic_expect_error_for_low_bid() {
         let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
-        Entries::add_many(items).await;
+        Entries::add_many(items);
 
         {
-            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
-            if let Some(entries) = index_lock {
+            if let Ok(entries) = &mut ENTRY_MAP.lock() {
                 dbg!(&entries.0);
                 assert!(entries.0.len() > 0);
             };
         }
 
-        if let Err(err) = Entries::search("banana", 8.23, false).await {
+        if let Err(err) = Entries::search("banana", 8.23, false) {
             assert_eq!(
                 err.to_string(),
                 String::from("Item banana costs more than your offer of $8.23")
@@ -90,36 +88,34 @@ pub mod tests {
     }
 
     #[should_panic]
-    #[tokio::test]
-    async fn handle_mismatching_category() {
+    #[test]
+    fn handle_mismatching_category() {
         let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
-        Entries::add_many(items).await;
+        Entries::add_many(items);
 
         {
-            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
-            if let Some(entries) = index_lock {
+            if let Ok(entries) = &mut ENTRY_MAP.lock() {
                 dbg!(&entries.0);
                 assert!(entries.0.len() > 0);
             };
         }
 
-        Entries::search("fruit", 20.00, false).await.unwrap();
+        Entries::search("fruit", 20.00, false).unwrap();
     }
 
-    #[tokio::test]
-    async fn panic_mismatching_category_partial_text() {
+    #[test]
+    fn panic_mismatching_category_partial_text() {
         let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
-        Entries::add_many(items).await;
+        Entries::add_many(items);
 
         {
-            let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
-            if let Some(entries) = index_lock {
+            if let Ok(entries) = &mut ENTRY_MAP.lock() {
                 dbg!(&entries.0);
                 assert!(entries.0.len() > 0);
             };
         }
 
-        if let Err(err) = Entries::search("red appl", 8.23, false).await {
+        if let Err(err) = Entries::search("red appl", 8.23, false) {
             assert_eq!(
                 err.to_string(),
                 String::from("Item red appl is not available!")
