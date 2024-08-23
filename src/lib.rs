@@ -11,3 +11,5 @@ pub mod traits;
 //mod trait_objects_1;
 pub mod challenge1;
 pub mod partial_eq;
+
+pub mod utils;

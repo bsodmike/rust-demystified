@@ -77,6 +77,8 @@ impl Entries {
 
         let index_lock: &mut Option<Entries> = &mut *ENTRY_MAP.lock().await;
         if let Some(entries) = index_lock {
+            // println!("Number of items to search: {}", entries.0.len());
+
             let needle = text;
             let haystack: Vec<String> = entries
                 .0
@@ -122,11 +124,24 @@ pub mod benchmarking {
 
 #[cfg(test)]
 pub mod tests {
+    extern crate tutorials;
+
     use super::*;
+    use tutorials::utils::generate::{float_nums, phrases};
 
     #[tokio::test]
     async fn match_existing_available_item() {
-        let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
+        static PHRASE_COUNT: i32 = 10_000_000;
+        let rng_phrases = phrases(PHRASE_COUNT);
+        let items: HashMap<&str, f64> = rng_phrases
+            .iter()
+            .map(|phrase| (phrase.as_str(), float_nums()))
+            .collect();
+
+        // let items: HashMap<&str, f64> =
+        //     HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
+        // dbg!(&items);
+        let hm_keys = &items.clone().into_keys().collect::<Vec<&str>>();
         Entries::add_many(items).await;
 
         {
@@ -136,8 +151,10 @@ pub mod tests {
                 assert!(entries.0.len() > 0);
             };
         }
+
         // Success, the buyer gets an instant match!
-        let (item, bid, ask) = black_box(Entries::search("banana", 20.00, true).await.unwrap());
+
+        let (item, bid, ask) = black_box(Entries::search(hm_keys[0], 120.00, true).await.unwrap());
     }
 
     #[tokio::test]
