@@ -13,6 +13,10 @@ path = "src/bin/tokio-panic-handling.rs"
 name = "string-search"
 path = "src/bin/string-search.rs"
 
+[[bin]]
+name = "string-search-heaptrack"
+path = "src/bin/string-search-heaptrack.rs"
+
 [dependencies]
 anyhow = "1.0.66"
 futures = "0.3.19"

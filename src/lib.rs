@@ -12,4 +12,7 @@ pub mod traits;
 pub mod challenge1;
 pub mod partial_eq;
 
+pub mod string_search {
+    pub mod core;
+}
 pub mod utils;
