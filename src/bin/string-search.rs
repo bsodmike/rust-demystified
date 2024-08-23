@@ -125,8 +125,6 @@ impl Entries {
 
 #[tokio::main]
 pub async fn main() -> Result<(), Error> {
-    // let _ = metrics::match_existing_available_item().await;
-
     Ok(())
 }
 
