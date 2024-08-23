@@ -19,10 +19,12 @@
 //!
 #![allow(unused_imports, dead_code, unused_variables)]
 
+use crate::benchmarking::contains;
 use anyhow::anyhow;
 use anyhow::Error;
 use std::cell::RefCell;
 use std::hash::Hash;
+use std::hint::black_box;
 use std::{
     collections::HashMap,
     io::{BufRead, Write},
@@ -59,7 +61,11 @@ impl Entries {
         }
     }
 
-    pub async fn search(input: &str, amount: f64) -> Result<(String, f64, f64), Error> {
+    pub async fn search(
+        input: &str,
+        amount: f64,
+        benchmark: bool,
+    ) -> Result<(String, f64, f64), Error> {
         let text = input.to_string();
 
         let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
@@ -67,22 +73,48 @@ impl Entries {
             let needle = text;
             let haystack: Vec<String> = entries.into_iter().map(|el| el.0.to_string()).collect();
 
-            if haystack.contains(&needle) {
-                if let Some(cost) = entries.get(&needle) {
-                    if amount >= *cost {
-                        Ok((needle, amount, *cost))
+            if benchmark {
+                let hay_slice: Vec<String> = haystack;
+                let hay_slice = hay_slice.as_slice();
+
+                if black_box(contains(
+                    black_box(hay_slice),
+                    black_box(needle.to_string()),
+                )) {
+                    if let Some(cost) = entries.get(&needle) {
+                        if amount >= *cost {
+                            Ok((needle, amount, *cost))
+                        } else {
+                            return Err(anyhow!(
+                                "Item {} costs more than your offer of ${}",
+                                &needle,
+                                &amount
+                            ));
+                        }
                     } else {
-                        return Err(anyhow!(
-                            "Item {} costs more than your offer of ${}",
-                            &needle,
-                            &amount
-                        ));
+                        unreachable!()
                     }
                 } else {
-                    unreachable!()
+                    return Err(anyhow!("Item {} is not available!", &needle));
                 }
             } else {
-                return Err(anyhow!("Item {} is not available!", &needle));
+                if haystack.contains(&needle) {
+                    if let Some(cost) = entries.get(&needle) {
+                        if amount >= *cost {
+                            Ok((needle, amount, *cost))
+                        } else {
+                            return Err(anyhow!(
+                                "Item {} costs more than your offer of ${}",
+                                &needle,
+                                &amount
+                            ));
+                        }
+                    } else {
+                        unreachable!()
+                    }
+                } else {
+                    return Err(anyhow!("Item {} is not available!", &needle));
+                }
             }
         } else {
             // This would be classed as an internal error, so ideally I would mark this as `unreachable!()`.
@@ -93,7 +125,15 @@ impl Entries {
 
 #[tokio::main]
 pub async fn main() -> Result<(), Error> {
+    // let _ = metrics::match_existing_available_item().await;
+
     Ok(())
+}
+
+pub mod benchmarking {
+    pub fn contains(haystack: &[String], needle: String) -> bool {
+        haystack.iter().any(|x| x == &needle)
+    }
 }
 
 #[cfg(test)]
@@ -114,7 +154,24 @@ pub mod tests {
         }
 
         // Success, the buyer gets an instant match!
-        let (item, bid, ask) = Entries::search("banana", 20.00).await.unwrap();
+        let (item, bid, ask) = Entries::search("banana", 20.00, false).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn match_existing_available_item_with_benchmarking() {
+        let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
+        Entries::add_many(items).await;
+
+        {
+            let index_lock: &mut Option<HashMap<String, f64>> = &mut *ENTRY_MAP.lock().await;
+            if let Some(entries) = index_lock {
+                dbg!(&entries);
+                assert!(entries.len() > 0);
+            };
+        }
+
+        // Success, the buyer gets an instant match!
+        let (item, bid, ask) = Entries::search("banana", 20.00, true).await.unwrap();
     }
 
     #[tokio::test]
@@ -130,7 +187,7 @@ pub mod tests {
             };
         }
 
-        if let Err(err) = Entries::search("banana", 8.23).await {
+        if let Err(err) = Entries::search("banana", 8.23, false).await {
             assert_eq!(
                 err.to_string(),
                 String::from("Item banana costs more than your offer of $8.23")
@@ -152,7 +209,7 @@ pub mod tests {
             };
         }
 
-        Entries::search("fruit", 20.00).await.unwrap();
+        Entries::search("fruit", 20.00, false).await.unwrap();
     }
 
     #[tokio::test]
@@ -168,7 +225,7 @@ pub mod tests {
             };
         }
 
-        if let Err(err) = Entries::search("red appl", 8.23).await {
+        if let Err(err) = Entries::search("red appl", 8.23, false).await {
             assert_eq!(
                 err.to_string(),
                 String::from("Item red appl is not available!")
