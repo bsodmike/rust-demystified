@@ -54,7 +54,7 @@ pub mod tests {
         //     HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
         // dbg!(&items);
         let hm_keys = &items.clone().into_keys().collect::<Vec<&str>>();
-        Entries::add_many(items);
+        Entries::add_many(black_box(items));
 
         {
             if let Ok(entries) = &mut ENTRY_MAP.lock() {
@@ -64,7 +64,7 @@ pub mod tests {
 
         // Success, the buyer gets an instant match!
 
-        let (item, bid, ask) = black_box(Entries::search(hm_keys[0], 120.00, true).unwrap());
+        let (item, bid, ask) = black_box(Entries::search(hm_keys[0], 120.00).unwrap());
     }
 
     #[test]
@@ -79,7 +79,7 @@ pub mod tests {
             };
         }
 
-        if let Err(err) = Entries::search("banana", 8.23, false) {
+        if let Err(err) = Entries::search("banana", 8.23) {
             assert_eq!(
                 err.to_string(),
                 String::from("Item banana costs more than your offer of $8.23")
@@ -100,7 +100,7 @@ pub mod tests {
             };
         }
 
-        Entries::search("fruit", 20.00, false).unwrap();
+        Entries::search("fruit", 20.00).unwrap();
     }
 
     #[test]
@@ -115,7 +115,7 @@ pub mod tests {
             };
         }
 
-        if let Err(err) = Entries::search("red appl", 8.23, false) {
+        if let Err(err) = Entries::search("red appl", 8.23) {
             assert_eq!(
                 err.to_string(),
                 String::from("Item red appl is not available!")

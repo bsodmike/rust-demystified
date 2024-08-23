@@ -30,7 +30,7 @@ impl Entries {
         }
     }
 
-    pub fn search(input: &str, amount: f64, _: bool) -> Result<(String, f64, f64), Error> {
+    pub fn search(input: &str, amount: f64) -> Result<(String, f64, f64), Error> {
         let text = input.to_string();
 
         if let Ok(entries) = &mut ENTRY_MAP.lock() {

@@ -25,8 +25,7 @@ pub async fn main() -> Result<(), Error> {
     }
 
     // Success, the buyer gets an instant match!
-    let _ = black_box(
-        Entries::search(hm_keys[0], 120.00, true).expect("Unable to search through entries!"),
-    );
+    let _ =
+        black_box(Entries::search(hm_keys[0], 120.00).expect("Unable to search through entries!"));
     Ok(())
 }
