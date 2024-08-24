@@ -49,37 +49,23 @@ pub mod tests {
             .iter()
             .map(|phrase| (phrase.as_str(), float_nums()))
             .collect();
-
-        // let items: HashMap<&str, f64> =
-        //     HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
-        // dbg!(&items);
         let hm_keys = &items.clone().into_keys().collect::<Vec<&str>>();
-        Entries::add_many(black_box(items));
 
-        {
-            if let Ok(entries) = &mut ENTRY_MAP.lock() {
-                assert!(entries.0.len() > 0);
-            };
-        }
+        let mut entries = Entries::new();
+        entries.add_many(black_box(items));
+        assert!(entries.len() > 0);
 
         // Success, the buyer gets an instant match!
-
-        let (item, bid, ask) = black_box(Entries::search(hm_keys[0], 120.00).unwrap());
+        let _ = black_box(entries.search(hm_keys[0], 120.00).unwrap());
     }
 
     #[test]
     fn panic_expect_error_for_low_bid() {
         let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
-        Entries::add_many(items);
+        let mut entries = Entries::new();
+        entries.add_many(black_box(items));
 
-        {
-            if let Ok(entries) = &mut ENTRY_MAP.lock() {
-                dbg!(&entries.0);
-                assert!(entries.0.len() > 0);
-            };
-        }
-
-        if let Err(err) = Entries::search("banana", 8.23) {
+        if let Err(err) = entries.search("banana", 8.23) {
             assert_eq!(
                 err.to_string(),
                 String::from("Item banana costs more than your offer of $8.23")
@@ -91,31 +77,19 @@ pub mod tests {
     #[test]
     fn handle_mismatching_category() {
         let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
-        Entries::add_many(items);
+        let mut entries = Entries::new();
+        entries.add_many(black_box(items));
 
-        {
-            if let Ok(entries) = &mut ENTRY_MAP.lock() {
-                dbg!(&entries.0);
-                assert!(entries.0.len() > 0);
-            };
-        }
-
-        Entries::search("fruit", 20.00).unwrap();
+        entries.search("fruit", 20.00).unwrap();
     }
 
     #[test]
     fn panic_mismatching_category_partial_text() {
         let items = HashMap::from([("red apple", 20.0), ("ferrari", 32.1), ("banana", 12.99)]);
-        Entries::add_many(items);
+        let mut entries = Entries::new();
+        entries.add_many(black_box(items));
 
-        {
-            if let Ok(entries) = &mut ENTRY_MAP.lock() {
-                dbg!(&entries.0);
-                assert!(entries.0.len() > 0);
-            };
-        }
-
-        if let Err(err) = Entries::search("red appl", 8.23) {
+        if let Err(err) = entries.search("red appl", 8.23) {
             assert_eq!(
                 err.to_string(),
                 String::from("Item red appl is not available!")
