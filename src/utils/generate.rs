@@ -20,23 +20,20 @@
 //! IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 //! CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 use rand::distributions::{Alphanumeric, DistString};
-use rand::prelude::SliceRandom;
-use rand::{thread_rng};
+use rand::{thread_rng, Rng};
 
 pub fn phrases(count: i32) -> Vec<String> {
     let mut rng = thread_rng();
-    let mut nums: Vec<i32> = (1..8).collect();
+    let max_word_characters = rng.gen_range(0..8);
 
     let data: Vec<String> = (0..count)
         .into_iter()
         .map(|_| {
-            nums.shuffle(&mut rng);
-
-            let phrase: Vec<String> = (0..nums[0])
+            let phrase: Vec<String> = (0..max_word_characters)
                 .into_iter()
                 .map(|_| -> String {
-                    nums.shuffle(&mut rng);
-                    Alphanumeric.sample_string(&mut rand::thread_rng(), nums[0] as usize)
+                    Alphanumeric
+                        .sample_string(&mut rand::thread_rng(), max_word_characters as usize)
                 })
                 .collect();
 
