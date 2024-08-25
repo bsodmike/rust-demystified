@@ -13,25 +13,27 @@ extern crate tutorials;
 
 #[tokio::main]
 pub async fn main() -> Result<(), Error> {
-    static PHRASE_COUNT: i32 = 10_000_000;
+    static PHRASE_COUNT: i32 = 500_000;
+    static INVOCATION_COUNT: i32 = 10_000;
     let rng_phrases = phrases(PHRASE_COUNT);
     if let Ok(phrases) = rng_phrases {
         let items: HashMap<&str, f64> = phrases
             .iter()
             .map(|phrase| (phrase.as_str(), rng_amount()))
             .collect();
-
-        let hm_keys = &items.clone().into_keys().collect::<Vec<&str>>();
+        let hm_keys = &items.keys().map(|el| el.to_owned()).collect::<Vec<&str>>();
 
         let mut entries = Entries::new();
         entries.add_many(black_box(items));
 
-        // Success, the buyer gets an instant match!
-        let _ = black_box(
-            entries
-                .search(hm_keys[0], 120.00)
-                .expect("Unable to search through entries!"),
-        );
+        for _loop_idx in 0..INVOCATION_COUNT {
+            // Success, the buyer gets an instant match!
+            let _ = black_box(
+                entries
+                    .search(hm_keys[0], 120.00)
+                    .expect("Unable to search through entries!"),
+            );
+        }
 
         // let phrase_text = phrases
         //     .iter()

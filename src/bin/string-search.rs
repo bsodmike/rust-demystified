@@ -57,7 +57,7 @@ pub mod tests {
                 .iter()
                 .map(|phrase| (phrase.as_str(), rng_amount()))
                 .collect();
-            let hm_keys = &items.clone().into_keys().collect::<Vec<&str>>();
+            let hm_keys = &items.keys().map(|el| el.to_owned()).collect::<Vec<&str>>();
 
             let mut entries = Entries::new();
             entries.add_many(black_box(items));
