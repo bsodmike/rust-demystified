@@ -19,27 +19,28 @@
 //! COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 //! IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 //! CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+use anyhow::Error;
 use rand::distributions::{Alphanumeric, DistString};
 use rand::{thread_rng, Rng};
 
-pub fn phrases(count: i32) -> Vec<String> {
-    let mut rng = thread_rng();
-    let max_word_characters = rng.gen_range(0..8);
+pub fn phrases(count: i32) -> Result<Vec<String>, Error> {
+    let rng_word_count = 8;
+    let rng_word_length = 10;
+    let rng_word_length_min = 3;
 
-    let data: Vec<String> = (0..count)
-        .into_iter()
+    (0..count)
+        .map(|_| (1..thread_rng().gen_range(1..rng_word_count)))
         .map(|_| {
-            let phrase: Vec<String> = (0..max_word_characters)
-                .into_iter()
-                .map(|_| -> String {
-                    Alphanumeric
-                        .sample_string(&mut rand::thread_rng(), max_word_characters as usize)
-                })
-                .collect();
-
-            phrase.join(" ")
+            Alphanumeric.sample_string(
+                &mut thread_rng(),
+                thread_rng().gen_range(rng_word_length_min..rng_word_length) as usize,
+            )
         })
-        .collect();
-
-    data
+        // NOTE: Optionally, while this example does not generate any empty words, if we wanted to filter through such a scenario, it can be done using a filter to generate an `Option`.
+        // .map(|word| Some(word).filter(|word| word.len() == 0))
+        // .map(|word| {
+        //     word.ok_or(anyhow::anyhow!("Word length is 0!".to_string()));
+        // })
+        .map(|word| Ok(word))
+        .collect()
 }
