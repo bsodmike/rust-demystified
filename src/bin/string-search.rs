@@ -37,9 +37,15 @@ pub async fn main() -> Result<(), Error> {
 #[cfg(test)]
 pub mod tests {
     use crate::tutorials::string_search::core::*;
-    use crate::tutorials::utils::generate::{float_nums, phrases};
+    use crate::tutorials::utils::generate::phrases;
+    use rand::{thread_rng, Rng};
     use std::collections::HashMap;
     use std::hint::black_box;
+
+    pub fn rng_amount() -> f64 {
+        let mut rng = thread_rng();
+        rng.gen_range(19.0..1.0e2)
+    }
 
     #[test]
     fn match_existing_available_item() {
@@ -47,7 +53,7 @@ pub mod tests {
         let rng_phrases = phrases(PHRASE_COUNT);
         let items: HashMap<&str, f64> = rng_phrases
             .iter()
-            .map(|phrase| (phrase.as_str(), float_nums()))
+            .map(|phrase| (phrase.as_str(), rng_amount()))
             .collect();
         let hm_keys = &items.clone().into_keys().collect::<Vec<&str>>();
 

@@ -21,7 +21,7 @@
 //! CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 use rand::distributions::{Alphanumeric, DistString};
 use rand::prelude::SliceRandom;
-use rand::thread_rng;
+use rand::{thread_rng};
 
 pub fn phrases(count: i32) -> Vec<String> {
     let mut rng = thread_rng();
@@ -45,14 +45,4 @@ pub fn phrases(count: i32) -> Vec<String> {
         .collect();
 
     data
-}
-
-pub fn float_nums() -> f64 {
-    let mut rng = thread_rng();
-    let mut nums: Vec<i32> = (19..100).collect();
-
-    nums.shuffle(&mut rng);
-    format!("{}.{}", &nums[0], &nums[1])
-        .parse()
-        .expect("Unable to parse String to f64!")
 }
