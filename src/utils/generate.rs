@@ -24,12 +24,10 @@ use rand::distributions::{Alphanumeric, DistString};
 use rand::{thread_rng, Rng};
 
 pub fn phrases(count: i32) -> Result<Vec<String>, Error> {
-    let rng_word_count = 8;
     let rng_word_length = 10;
     let rng_word_length_min = 3;
 
     (0..count)
-        .map(|_| (1..thread_rng().gen_range(1..rng_word_count)))
         .map(|_| thread_rng().gen_range(rng_word_length_min..rng_word_length) as usize)
         .map(|length| Alphanumeric.sample_string(&mut thread_rng(), length))
         // NOTE: Optionally, while this example does not generate any empty words, if we wanted to filter through such a scenario, it can be done using a filter to generate an `Option`.
