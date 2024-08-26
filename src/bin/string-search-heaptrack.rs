@@ -12,11 +12,8 @@ pub fn rng_amount() -> f64 {
 extern crate tutorials;
 
 pub fn main() -> Result<(), Error> {
-    // static PHRASE_COUNT: i32 = 100_000;
-    // static INVOCATION_COUNT: i32 = 50_000;
-
-    static PHRASE_COUNT: i32 = 20;
-    static INVOCATION_COUNT: i32 = 5;
+    static PHRASE_COUNT: i32 = 10_000;
+    static INVOCATION_COUNT: i32 = 20;
 
     let rng_phrases = phrases(PHRASE_COUNT);
     if let Ok(phrases) = rng_phrases {
@@ -38,11 +35,11 @@ pub fn main() -> Result<(), Error> {
             );
         }
 
-        let phrase_text = phrases
-            .iter()
-            .map(|el| format!("\"{}\", ", el))
-            .collect::<String>();
-        dbg!(&phrase_text);
+        // let phrase_text = phrases
+        //     .iter()
+        //     .map(|el| format!("\"{}\", ", el))
+        //     .collect::<String>();
+        // dbg!(&phrase_text);
         println!("Phrases generated: {}", &phrases.len());
     }
 
