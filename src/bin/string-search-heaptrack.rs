@@ -11,10 +11,13 @@ pub fn rng_amount() -> f64 {
 }
 extern crate tutorials;
 
-#[tokio::main]
-pub async fn main() -> Result<(), Error> {
-    static PHRASE_COUNT: i32 = 500_000;
-    static INVOCATION_COUNT: i32 = 10_000;
+pub fn main() -> Result<(), Error> {
+    // static PHRASE_COUNT: i32 = 100_000;
+    // static INVOCATION_COUNT: i32 = 50_000;
+
+    static PHRASE_COUNT: i32 = 20;
+    static INVOCATION_COUNT: i32 = 5;
+
     let rng_phrases = phrases(PHRASE_COUNT);
     if let Ok(phrases) = rng_phrases {
         let items: HashMap<&str, f64> = phrases
@@ -35,10 +38,11 @@ pub async fn main() -> Result<(), Error> {
             );
         }
 
-        // let phrase_text = phrases
-        //     .iter()
-        //     .map(|el| format!("\"{}\", ", el))
-        //     .collect::<String>();
+        let phrase_text = phrases
+            .iter()
+            .map(|el| format!("\"{}\", ", el))
+            .collect::<String>();
+        dbg!(&phrase_text);
         println!("Phrases generated: {}", &phrases.len());
     }
 
