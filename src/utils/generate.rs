@@ -23,6 +23,7 @@
 use anyhow::{Context, Error};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::{thread_rng, Rng};
+use tokio::time::error::Elapsed;
 
 pub fn phrases(count: i32) -> Result<Vec<String>, Error> {
     let rng_word_length = 10;
@@ -36,4 +37,19 @@ pub fn phrases(count: i32) -> Result<Vec<String>, Error> {
         // .map(|word| word.context(anyhow::anyhow!("Word length is 0!")))
         .map(|word| Ok(word))
         .collect()
+}
+
+pub fn phrases_randomized(count: usize, words_per_phrase: usize) -> Result<Vec<String>, Error> {
+    let rng_word_length = 10;
+    let rng_word_length_min = 3;
+
+    Ok((0..count)
+        .map(|_| {
+            (0..words_per_phrase)
+                .map(|_| thread_rng().gen_range(rng_word_length_min..rng_word_length) as usize)
+                .map(|length| Alphanumeric.sample_string(&mut thread_rng(), length))
+                .collect::<Vec<String>>()
+                .join(" ")
+        })
+        .collect())
 }
