@@ -55,29 +55,19 @@ impl Entries {
         let needle = input.to_string();
         log::debug!("Number of items to search: {}", self.0.len());
 
-        if self.0.contains_key(&needle) {
-            if let Some(cost) = self.0.get(&needle) {
-                if amount >= *cost {
-                    Ok((needle, amount, *cost))
-                } else {
-                    return Err(anyhow!(
-                        "Item {} costs more than your offer of ${}",
-                        &needle,
-                        &amount
-                    ));
-                }
+        if let Some(cost) = self.0.get(&needle) {
+            if amount >= *cost {
+                Ok((needle, amount, *cost))
             } else {
-                unreachable!()
+                return Err(anyhow!(
+                    "Item {} costs more than your offer of ${}",
+                    &needle,
+                    &amount
+                ));
             }
         } else {
             return Err(anyhow!("Item {} is not available!", &needle));
         }
-    }
-}
-
-pub mod benchmarking {
-    pub fn contains(haystack: &[String], needle: String) -> bool {
-        haystack.iter().any(|x| x == &needle)
     }
 }
 
