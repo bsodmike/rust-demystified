@@ -2,4 +2,4 @@
 /.vscode
 Cargo.lock
 
-flamegraph.svg
+/flamegraph.svg
