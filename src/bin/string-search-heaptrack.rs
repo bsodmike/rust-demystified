@@ -13,7 +13,7 @@ extern crate tutorials;
 
 pub fn main() -> Result<(), Error> {
     static PHRASE_COUNT: i32 = 10_000;
-    static INVOCATION_COUNT: i32 = 20;
+    static INVOCATION_COUNT: i32 = 1_000_000;
 
     let rng_phrases = phrases(PHRASE_COUNT);
     if let Ok(phrases) = rng_phrases {

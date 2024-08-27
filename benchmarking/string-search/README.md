@@ -8,6 +8,8 @@ Run as follows, also works on Mac.
 cargo flamegraph --root --flamechart --verbose --bin string-search-heaptrack
 ```
 
+This example runs 1 Million invocations of `Entries::search()`
+
 <img src="./flamegraph.svg"/>
 
 ## heaptrack

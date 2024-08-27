@@ -53,10 +53,9 @@ impl Entries {
 
     pub fn search(&mut self, input: &str, amount: f64) -> Result<(String, f64, f64), Error> {
         let needle = input.to_string();
-        let haystack: Vec<String> = self.0.iter().map(|el| el.0.to_string()).collect();
         log::debug!("Number of items to search: {}", self.0.len());
 
-        if haystack.contains(&needle) {
+        if self.0.contains_key(&needle) {
             if let Some(cost) = self.0.get(&needle) {
                 if amount >= *cost {
                     Ok((needle, amount, *cost))
