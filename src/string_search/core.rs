@@ -51,17 +51,17 @@ impl Entries {
         self.0 = new;
     }
 
-    pub fn search(&mut self, needle: &str, amount: f64) -> Result<(String, f64, f64), Error> {
+    pub fn search(&mut self, needle: &str, offered_amount: f64) -> Result<f64, Error> {
         log::debug!("Number of items to search: {}", self.0.len());
 
         if let Some(cost) = self.0.get(needle) {
-            if amount >= *cost {
-                Ok((needle.to_string(), amount, *cost))
+            if offered_amount >= *cost {
+                Ok(*cost)
             } else {
                 return Err(anyhow!(
                     "Item {} costs more than your offer of ${}",
                     &needle,
-                    &amount
+                    &offered_amount
                 ));
             }
         } else {
