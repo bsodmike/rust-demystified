@@ -1,0 +1,9 @@
+[package]
+name = "trait-objects"
+version = "0.1.0"
+authors = ["Michael de Silva <michael@cyberdynea.io"]
+edition = "2021"
+
+[dependencies]
+rand = "0.7"
+downcast-rs = "1.2.1"
