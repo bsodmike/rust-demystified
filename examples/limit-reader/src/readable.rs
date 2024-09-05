@@ -1,19 +1,17 @@
 use super::*;
 
 pub trait ReaderTrait: std::io::Read {}
-pub struct MyBufReader(pub BufReader<File>);
+pub struct MyBufReader<Z: Read>(pub Z);
 
-impl std::io::Read for MyBufReader {
+impl<Z: Read> Read for MyBufReader<Z> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.0.read(buf)
     }
 }
 
-impl ReaderTrait for MyBufReader {}
+impl<Z: Read> ReaderTrait for MyBufReader<Z> {}
 
 pub trait Readable {
-    // fn new(r: impl ReaderTrait) -> Self;
-
     fn perform_read(&mut self, buf: &mut [u8]) -> io::Result<usize>;
 }
 
@@ -30,21 +28,16 @@ pub(crate) struct LimitReader<R>
 where
     R: ReaderTrait,
 {
-    pub reader: R,
-    pub limit: usize,
+    reader: R,
+    limit: usize,
 }
 
 impl<R> LimitReader<R>
 where
     R: ReaderTrait,
 {
-    pub fn new(r: R) -> Self {
-        const LIMIT_READER: u64 = 8_u64;
-
-        Self {
-            reader: r,
-            limit: LIMIT_READER as usize,
-        }
+    pub fn new(r: R, limit: usize) -> Self {
+        Self { reader: r, limit }
     }
 }
 
@@ -60,6 +53,7 @@ where
             return Err(io::Error::new(io::ErrorKind::Other, "too many bytes"));
         }
         self.limit -= n;
+
         Ok(n)
     }
 }
