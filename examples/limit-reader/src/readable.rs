@@ -1,6 +1,5 @@
 use super::*;
 
-pub trait ReaderTrait: std::io::Read {}
 pub struct MyBufReader<Z: Read>(pub Z);
 
 impl<Z: Read> Read for MyBufReader<Z> {
@@ -9,41 +8,39 @@ impl<Z: Read> Read for MyBufReader<Z> {
     }
 }
 
-impl<Z: Read> ReaderTrait for MyBufReader<Z> {}
-
 pub trait Readable {
     fn perform_read(&mut self, buf: &mut [u8]) -> io::Result<usize>;
 }
 
-impl<R> Readable for LimitReader<R>
+impl<R> Readable for LimitReaderPrivate<R>
 where
-    R: ReaderTrait,
+    R: Read,
 {
     fn perform_read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.read(buf)
     }
 }
 
-pub(crate) struct LimitReader<R>
+pub(crate) struct LimitReaderPrivate<R>
 where
-    R: ReaderTrait,
+    R: Read,
 {
     reader: R,
     limit: usize,
 }
 
-impl<R> LimitReader<R>
+impl<R> LimitReaderPrivate<R>
 where
-    R: ReaderTrait,
+    R: Read,
 {
     pub fn new(r: R, limit: usize) -> Self {
         Self { reader: r, limit }
     }
 }
 
-impl<R> Read for LimitReader<R>
+impl<R> Read for LimitReaderPrivate<R>
 where
-    R: ReaderTrait,
+    R: Read,
 {
     fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
         if buf.len() > self.limit {}
@@ -58,13 +55,13 @@ where
     }
 }
 
-impl<R> BufRead for LimitReader<R>
+impl<R> BufRead for LimitReaderPrivate<R>
 where
-    R: ReaderTrait,
+    R: Read,
 {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        unimplemented!("LimitReader should never call `fill_buf`")
+        unimplemented!("LimitReaderPrivate should never call `fill_buf`")
     }
 
-    fn consume(&mut self, amt: usize) {}
+    fn consume(&mut self, _: usize) {}
 }
