@@ -53,6 +53,10 @@ tower-http = { version = "0.4.0", features = ["trace", "cors", "catch-panic"] }
 tower-layer = "0.3.1"
 tower-service = "0.3.1"
 
+# Logging support
+tracing = "0.1.30"
+tracing-subscriber = { version = "0.3.8", features = ["env-filter"] }
+
 [dev-dependencies]
 test-log = "0.2.10"
 
