@@ -10,10 +10,6 @@ name = "tokio-panic-handling"
 path = "src/bin/tokio-panic-handling.rs"
 
 [[bin]]
-name = "string-search"
-path = "src/bin/string-search.rs"
-
-[[bin]]
 name = "string-search-heaptrack"
 path = "src/bin/string-search-heaptrack.rs"
 

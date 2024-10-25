@@ -99,7 +99,7 @@ pub fn runner() -> Result<()> {
     lesson_1_add_trait_bound_to_parameter();
     lesson_2();
     lesson_3::run()?;
-    // lesson_4::run();```````````````````````````````````
+    // lesson_4::run();
     // lesson_5::run();
 
     // lesson6::run();
