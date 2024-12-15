@@ -45,6 +45,7 @@ heapless = "^0.8"
 rand = "0.8.5"
 pin-project = "1.1.7"
 
+
 # Misc
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 kanal = "0.1.0-pre8"
