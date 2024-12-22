@@ -64,6 +64,7 @@ tower-http_0_2_4 = { package = "tower-http", version = "0.2.4" , features = ["co
 tracing = "0.1.30"
 tracing-subscriber = { version = "0.3.8", features = ["env-filter"] }
 nalgebra = "0.33.2"
+nom = "7.1.3"
 
 [dev-dependencies]
 test-log = "0.2.10"
