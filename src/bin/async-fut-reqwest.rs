@@ -34,7 +34,7 @@ pub trait HttpClient {
 #[async_trait]
 #[allow(clippy::redundant_closure)]
 impl HttpClient for ReqwestClient {
-    // Alternatively, we could also pass `body: Bytes` and insice the async closure use `body.clone()`, as this is what reqwest expects.
+    // Alternatively, we could also pass `body: Bytes` and inside the async closure use `body.clone()`, as this is what reqwest expects.
     async fn post(&self, url: &str, api_key: &str, body: &[u8]) -> Result<Response, Error> {
         let retry_strategy = RetryStrategy::default().get_config();
 
