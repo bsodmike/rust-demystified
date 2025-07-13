@@ -74,9 +74,10 @@ pub async fn main() -> Result<(), Error> {
     let repository = PostgresIgnoredUsersRepository { pool: () };
 
     // This abstracts the use case from the DB operations that run on the repository
-    let use_case = AddIgnoredUser::new(Dependencies {
+    let dependency = Dependencies {
         repository: &repository,
-    });
+    };
+    let use_case = AddIgnoredUser::new(dependency);
 
     use_case.exec(Request {}).await?;
     println!("Performed use case");
