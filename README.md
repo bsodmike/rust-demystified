@@ -4,6 +4,13 @@
 
 This repo means to serve as a playground for expressing concepts quickly, in a "Rust by Example" format.
 
+## Examples
+
+Run the following with `cargo r --bin <PACKAGE_NAME>`
+
+1. `tokio-panic-handling`
+
+
 
 ## License Information
 

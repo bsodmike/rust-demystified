@@ -17,7 +17,7 @@ fn shoes_into_iter(shoes: MyVec<Vec<Shoe>>, shoe_size: u32) -> MyVec<Vec<Shoe>> 
 }
 
 #[derive(PartialEq, Debug, Clone)]
-struct MyVec<T>(T);
+pub struct MyVec<T>(T);
 
 struct MyVecIter<'a, T> {
     vector: &'a T,
